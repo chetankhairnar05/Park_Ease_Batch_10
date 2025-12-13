@@ -11,6 +11,7 @@ import com.natche.park_ease.repository.ParkingSlotRepository;
 import com.natche.park_ease.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,6 +23,7 @@ import java.util.List;
 
 @Component
 @EnableScheduling
+@DependsOn("entityManagerFactory") 
 public class BookingScheduler {
 
     @Autowired private BookingRepository bookingRepository;
@@ -38,7 +40,7 @@ public class BookingScheduler {
 
     // FAST MODE (every 1 second):
     // @Scheduled(fixedRate = 1000)
-    @Scheduled(fixedRate = 1000000)
+    @Scheduled(fixedRate = 100000000)
     @Transactional
     public void checkExpiredReservations() {
 
