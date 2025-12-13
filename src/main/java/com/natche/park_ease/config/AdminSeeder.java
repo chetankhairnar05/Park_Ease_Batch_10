@@ -3,6 +3,7 @@ package com.natche.park_ease.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,7 @@ import com.natche.park_ease.enums.UserRole;
 import com.natche.park_ease.repository.UserRepository;
 
 @Component
+@DependsOn("entityManagerFactory") // <--- Add this annotation
 public class AdminSeeder implements CommandLineRunner {
 
     @Autowired
