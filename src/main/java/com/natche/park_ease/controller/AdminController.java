@@ -34,47 +34,7 @@ public class AdminController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // Endpoint to create Guards or other Admins
-    // @PostMapping("/create-staff")
-    // @PreAuthorize("hasRole('ADMIN')")
-    // public ResponseEntity<?> createStaff(@RequestBody StaffRegisterRequest request) {
-    //     // Validate Role (Prevent creating random roles if you have others)
-    //     if (request.getRole() != UserRole.ADMIN && request.getRole() != UserRole.AREA_OWNER) {
-    //         return ResponseEntity.badRequest().body("Invalid Role. Only ADMIN or AREA_OWNER allowed here.");
-    //     }
-
-    //     Optional<User> existingUserOpt = userRepository.findByEmailOrPhone(request.getEmail(), request.getPhone());
-    //     User owner;
-
-    //     if (existingUserOpt.isPresent()) {
-    //         // --- EXISTING USER LOGIC ---
-    //         owner = existingUserOpt.get();
-            
-    //         // Validation: Can only recruit DRIVERS
-    //         if (owner.getRole() == UserRole.ADMIN || owner.getRole() == UserRole.AREA_OWNER ) {
-    //             // throw new RuntimeException("User is already a area owner or Admin.");
-    //             return ResponseEntity.badRequest().body("Requested user is already a area owner or Admin.");
-    //         }
-    //         //guard and driver can promote to area owner
-    //         // Promote to GUARD
-    //         owner.setRole(UserRole.AREA_OWNER);
-    //         // We do NOT update password for existing users, they keep their own.
-
-    //     } else {
-    //         // --- NEW USER LOGIC ---
-    //          owner= User.builder()
-    //                 .name(request.getName())
-    //                 .email(request.getEmail())
-    //                 .phone(request.getPhone())
-    //                 .password(passwordEncoder.encode(request.getPassword()))
-    //                 .role(request.getRole()).isBlocked(false)
-    //                 .isEnabled(true)
-    //                 .build();
-    //     }
-    //     userRepository.save(owner);
-
-    //     return ResponseEntity.ok("Staff member created successfully: " + request.getRole());
-    // }
+    
     @PostMapping("/create-staff")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createStaff(@RequestBody StaffRegisterRequest request) {
@@ -148,11 +108,7 @@ public class AdminController {
 
         return ResponseEntity.ok("Staff member created successfully: " + request.getRole());
     }
-    // @GetMapping("/get-all-staff/")
-    // @PreAuthorize("hasRole('ADMIN')")
-    // public ResponseEntity<?> getAllStaff() {
-    //     return ResponseEntity.ok(userRepository.findByRoleIn(UserRole.ADMIN, UserRole.AREA_OWNER));
-    // }
+    
 
      @GetMapping("/get-all-staff/")
     @PreAuthorize("hasRole('ADMIN')")

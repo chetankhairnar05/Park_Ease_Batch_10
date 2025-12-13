@@ -4,6 +4,16 @@ Park Ease is a production-grade Spring Boot application engineered to address mo
 
 ---
 
+### How to Work
+
+open auth.html in live server , we have a admin with ,
+email = admin@parkease.com
+password = admin123
+
+admin is responsible for creating area owner
+
+and area owner is responsible for creating parking area
+
 ## 1. Overview
 
 Park Ease provides an end-to-end solution for digital parking management, integrating automated gate operations, QR-based arrival workflows, and role-based access control. The system is designed for scalability, operational efficiency, and fast transactions.

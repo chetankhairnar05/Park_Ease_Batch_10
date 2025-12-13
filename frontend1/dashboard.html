@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Park Ease - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <div class="bg-indigo-600 text-white p-1.5 rounded-lg mr-2">🅿️</div>
+            <span class="font-bold text-xl text-gray-800">Park Ease</span>
+          </div>
+          <div class="flex items-center space-x-4">
+            <span
+              id="nav-username"
+              class="text-sm font-medium text-gray-600 hidden sm:block"
+              >User</span
+            >
+            <button
+              onclick="logout()"
+              class="text-sm text-red-600 hover:text-red-800 font-medium"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Role Specific Dashboards (Hidden by default) -->
+      <div id="role-actions" class="mb-8 hidden">
+        <h2
+          class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3"
+        >
+          Management Consoles
+        </h2>
+        <div
+          class="grid grid-cols-1 sm:grid-cols-3 gap-4"
+          id="role-buttons-container"
+        >
+          <!-- Buttons injected via JS -->
+        </div>
+      </div>
+      <!-- Find Parking Section -->
+      <div class="mb-8">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold text-gray-900">Find Parking</h2>
+          <button
+            onclick="findAllParking()"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md transition flex items-center"
+          >
+            <svg
+              class="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            Search Nearby
+          </button>
+        </div>
+
+        <!-- Parking Results Grid -->
+        <div
+          id="parking-results"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden"
+        >
+          <!-- Cards injected here -->
+        </div>
+        <div id="parking-loading" class="hidden text-center py-8 text-gray-500">
+          Searching for spots near you...
+        </div>
+        <div
+          id="parking-error"
+          class="hidden text-center py-8 text-red-500"
+        ></div>
+      </div>
+
+      <!-- Main Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Column 1: Profile & Wallet -->
+        <div class="space-y-8">
+          <!-- Profile Card -->
+          <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center space-x-4 mb-4">
+              <div
+                class="h-12 w-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xl font-bold"
+              >
+                <span id="avatar-initial">U</span>
+              </div>
+              <div>
+                <h2 id="profile-name" class="text-lg font-bold text-gray-900">
+                  Loading...
+                </h2>
+                <p id="profile-email" class="text-sm text-gray-500">...</p>
+              </div>
+            </div>
+            <div class="border-t border-gray-100 pt-4">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-sm text-gray-500">Role</span>
+                <span
+                  id="profile-role"
+                  class="px-2 py-1 bg-gray-100 rounded text-xs font-bold text-gray-600"
+                  >DRIVER</span
+                >
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-500">Phone</span>
+                <span
+                  id="profile-phone"
+                  class="text-sm font-medium text-gray-900"
+                  >...</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Wallet Card -->
+          <div
+            class="bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl shadow-lg p-6 text-white"
+          >
+            <h3 class="text-sm font-medium text-gray-400 mb-1">
+              Wallet Balance
+            </h3>
+            <div class="text-3xl font-bold mb-6">
+              ₹<span id="wallet-balance">0.00</span>
+            </div>
+
+            <div class="space-y-3">
+              <label class="text-xs text-gray-400">Top Up Amount</label>
+              <div class="flex space-x-2">
+                <input
+                  type="number"
+                  id="topup-amount"
+                  class="w-full bg-gray-700 border-none rounded-lg text-white px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500"
+                  placeholder="500"
+                />
+                <button
+                  onclick="handleTopUp()"
+                  class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-bold transition"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 2: Location -->
+        <div class="space-y-8">
+          <div
+            class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 h-full"
+          >
+            <h3 class="font-bold text-gray-900 mb-4 flex items-center">
+              <svg
+                class="w-5 h-5 mr-2 text-indigo-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              Current Location
+            </h3>
+            <p class="text-xs text-gray-500 mb-6">
+              Updating your location helps us find the nearest parking slots.
+            </p>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1"
+                  >Latitude</label
+                >
+                <input
+                  type="text"
+                  id="loc-lat"
+                  class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                  placeholder="22.7196"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1"
+                  >Longitude</label
+                >
+                <input
+                  type="text"
+                  id="loc-lon"
+                  class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                  placeholder="75.8577"
+                />
+              </div>
+              <button
+                onclick="handleLocationUpdate()"
+                class="w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold py-2 rounded-lg text-sm transition"
+              >
+                Update Coordinates
+              </button>
+              <button
+                onclick="geoLocate()"
+                class="w-full text-indigo-600 text-xs hover:underline flex justify-center items-center"
+              >
+                <svg
+                  class="w-3 h-3 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Auto-detect GPS
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 3: Vehicles -->
+        <div class="space-y-8">
+          <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="flex justify-between items-center mb-6">
+              <h3 class="font-bold text-gray-900">My Vehicles</h3>
+              <a
+                href="vehicle-register.html"
+                class="text-sm bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg font-medium hover:bg-indigo-100 transition"
+                >+ Add New</a
+              >
+            </div>
+
+            <div id="vehicles-list" class="space-y-3">
+              <p class="text-sm text-gray-400 text-center py-4">
+                Loading vehicles...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slots Modal -->
+    <div
+      id="slots-modal"
+      class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm"
+    >
+      <div
+        class="bg-white rounded-xl shadow-2xl w-full max-w-4xl p-6 max-h-[90vh] overflow-y-auto m-4"
+      >
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+          <div>
+            <h2 class="text-xl font-bold text-gray-900" id="modal-area-name">
+              Area Name
+            </h2>
+            <p class="text-sm text-gray-500" id="modal-area-dist">
+              Distance: --
+            </p>
+          </div>
+          <button
+            onclick="closeSlotsModal()"
+            class="text-gray-400 hover:text-gray-600 p-2"
+          >
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div
+          id="modal-slots-grid"
+          class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3"
+        >
+          <!-- Slots injected here -->
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:8080/api";
+      const token = localStorage.getItem("parkease_token");
+
+      if (!token) window.location.href = "auth.html";
+
+      async function init() {
+        try {
+          await loadProfile();
+          await loadVehicles();
+        } catch (e) {
+          console.error(e);
+          alert("Session expired or API error: " + e.message);
+        }
+      }
+
+      async function fetchAPI(endpoint, method = "GET", body = null) {
+        const headers = {
+          "Content-Type": "application/json",
+          "X-Auth-Token": token,
+        };
+        const opts = { method, headers };
+        if (body) opts.body = JSON.stringify(body);
+
+        const res = await fetch(`${API_BASE}${endpoint}`, opts);
+        const text = await res.text();
+
+        if (!res.ok) throw new Error(text);
+
+        try {
+          return JSON.parse(text);
+        } catch {
+          return text;
+        }
+      }
+
+      // --- PARKING SEARCH LOGIC ---
+      async function findAllParking() {
+        const container = document.getElementById("parking-results");
+        const loader = document.getElementById("parking-loading");
+        const errorDiv = document.getElementById("parking-error");
+
+        container.classList.add("hidden");
+        errorDiv.classList.add("hidden");
+        loader.classList.remove("hidden");
+
+        try {
+          const areas = await fetchAPI("/slots/all");
+          loader.classList.add("hidden");
+
+          if (!Array.isArray(areas) || areas.length === 0) {
+            errorDiv.innerText = "No parking areas found near your location.";
+            errorDiv.classList.remove("hidden");
+            return;
+          }
+
+          container.innerHTML = "";
+          areas.forEach((area) => {
+            container.innerHTML += `
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition p-5">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-gray-800 text-lg">${
+                              area.name
+                            }</h3>
+                            <span class="bg-indigo-50 text-indigo-700 text-xs px-2 py-1 rounded-full font-bold">${
+                              area.distanceKm
+                            } km</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-4 h-8 overflow-hidden">${
+                          area.address || "Address not available"
+                        }</p>
+                        
+                        <div class="flex space-x-2 mb-4">
+                            <div class="flex-1 text-center bg-gray-50 rounded p-1">
+                                <div class="text-[10px] text-gray-400 uppercase">Small</div>
+                                <div class="font-bold text-gray-700">${
+                                  area.availableSmall
+                                }</div>
+                            </div>
+                            <div class="flex-1 text-center bg-gray-50 rounded p-1">
+                                <div class="text-[10px] text-gray-400 uppercase">Med</div>
+                                <div class="font-bold text-gray-700">${
+                                  area.availableMedium
+                                }</div>
+                            </div>
+                            <div class="flex-1 text-center bg-gray-50 rounded p-1">
+                                <div class="text-[10px] text-gray-400 uppercase">Lrg</div>
+                                <div class="font-bold text-gray-700">${
+                                  area.availableLarge
+                                }</div>
+                            </div>
+                        </div>
+
+                        <button onclick="viewAreaSlots(${
+                          area.areaId
+                        }, '${area.name.replace(/'/g, "\\'")}', '${
+              area.distanceKm
+            }')" class="w-full bg-gray-900 text-white text-sm font-bold py-2 rounded-lg hover:bg-black transition">
+                            View Slots
+                        </button>
+                    </div>`;
+          });
+          container.classList.remove("hidden");
+        } catch (err) {
+          loader.classList.add("hidden");
+          errorDiv.innerText = "Search Failed: " + err.message;
+          errorDiv.classList.remove("hidden");
+        }
+      }
+
+      async function viewAreaSlots(areaId, areaName, dist) {
+        const modal = document.getElementById("slots-modal");
+        const grid = document.getElementById("modal-slots-grid");
+
+        document.getElementById("modal-area-name").innerText = areaName;
+        document.getElementById(
+          "modal-area-dist"
+        ).innerText = `Distance: ${dist} km`;
+        grid.innerHTML =
+          '<div class="col-span-full text-center py-10 text-gray-400">Loading slots...</div>';
+        modal.classList.remove("hidden");
+
+        try {
+          const slots = await fetchAPI(`/slots/area/${areaId}`);
+
+          if (!Array.isArray(slots) || slots.length === 0) {
+            grid.innerHTML =
+              '<div class="col-span-full text-center py-10 text-gray-400">No slots found in this area.</div>';
+            return;
+          }
+
+          grid.innerHTML = "";
+          slots.forEach((s) => {
+            let colorClass =
+              "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed";
+            let clickAction = "";
+
+            if (s.status === "AVAILABLE") {
+              colorClass =
+                "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:border-green-300 cursor-pointer shadow-sm";
+              // Corrected string escaping for onclick
+              clickAction = `onclick="goToBooking(${s.slotId}, ${areaId})"`;
+            } else if (s.status === "OCCUPIED") {
+              colorClass =
+                "bg-red-50 text-red-400 border-red-100 cursor-not-allowed";
+            } else if (s.status === "RESERVED") {
+              colorClass =
+                "bg-yellow-50 text-yellow-600 border-yellow-100 cursor-not-allowed";
+            }
+
+            grid.innerHTML += `
+                    <div ${clickAction} class="border rounded-lg p-2 text-center transition-all ${colorClass}">
+                        <div class="text-xs font-bold">${s.slotNumber}</div>
+                        <div class="text-[10px] mt-1 opacity-75">${s.status.substring(
+                          0,
+                          4
+                        )}</div>
+                        <div class="text-[10px] font-mono mt-1">₹${
+                          s.baseHourlyRate
+                        }</div>
+                    </div>`;
+          });
+        } catch (err) {
+          grid.innerHTML = `<div class="col-span-full text-center py-10 text-red-500">${err.message}</div>`;
+        }
+      }
+
+      function closeSlotsModal() {
+        document.getElementById("slots-modal").classList.add("hidden");
+      }
+
+      function goToBooking(slotId, areaId) {
+        // Redirect to booking page with params
+        window.location.href = `booking.html?slotId=${slotId}&areaId=${areaId}`;
+      }
+
+      // --- EXISTING FUNCTIONS (Profile, Wallet, Vehicle, Location) ---
+      // (Keep all your existing loadProfile, renderRoleButtons, loadVehicles, handleTopUp, handleLocationUpdate, geoLocate, logout functions exactly as they were)
+
+      async function loadProfile() {
+        const user = await fetchAPI("/user/profile");
+
+        document.getElementById("profile-name").innerText = user.name;
+        document.getElementById("profile-email").innerText = user.email;
+        document.getElementById("profile-phone").innerText = user.phone;
+        document.getElementById("profile-role").innerText = user.role;
+        document.getElementById("nav-username").innerText =
+          user.name.split(" ")[0];
+        document.getElementById("avatar-initial").innerText = user.name
+          .charAt(0)
+          .toUpperCase();
+        document.getElementById("wallet-balance").innerText = (
+          user.walletBalance || 0
+        ).toFixed(2);
+
+        // Pre-fill location
+        if (user.latitude)
+          document.getElementById("loc-lat").value = user.latitude;
+        if (user.longitude)
+          document.getElementById("loc-lon").value = user.longitude;
+
+        renderRoleButtons(user.role);
+      }
+
+      function renderRoleButtons(role) {
+        const container = document.getElementById("role-buttons-container");
+        const wrapper = document.getElementById("role-actions");
+        let html = "";
+
+        if (role === "AREA_OWNER" || role === "ADMIN") {
+          html += `
+                <a href="owner-dashboard.html" class="flex items-center justify-center p-4 bg-amber-50 border border-amber-200 rounded-xl hover:bg-amber-100 transition cursor-pointer text-amber-800 font-bold text-sm shadow-sm">
+                    🏢 Area Owner Dashboard
+                </a>`;
+        }
+
+        if (role === "ADMIN") {
+          html += `
+                <a href="admin-dashboard.html" class="flex items-center justify-center p-4 bg-pink-50 border border-pink-200 rounded-xl hover:bg-pink-100 transition cursor-pointer text-pink-800 font-bold text-sm shadow-sm">
+                    ⚡ Admin Console
+                </a>`;
+        }
+
+        if (role === "GUARD" || role === "ADMIN") {
+          html += `
+                <a href="guard-dashboard.html" class="flex items-center justify-center p-4 bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-100 transition cursor-pointer text-blue-800 font-bold text-sm shadow-sm">
+                    👮 Guard Interface
+                </a>`;
+        }
+
+        if (html) {
+          container.innerHTML = html;
+          wrapper.classList.remove("hidden");
+        }
+      }
+
+      async function loadVehicles() {
+        // Note: Endpoint returns UserVehicleAccess list based on your code
+        const accessList = await fetchAPI("/user/vehicles");
+        const container = document.getElementById("vehicles-list");
+        container.innerHTML = "";
+
+        if (!Array.isArray(accessList) || accessList.length === 0) {
+          container.innerHTML =
+            '<p class="text-sm text-gray-400 text-center py-4">No vehicles found.</p>';
+          return;
+        }
+
+        accessList.forEach((item) => {
+          const v = item.vehicle;
+          const isPrimary = item.isPrimary
+            ? '<span class="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold uppercase ml-2">Primary</span>'
+            : "";
+          const roleBadge =
+            item.role === "OWNER"
+              ? "bg-gray-100 text-gray-600"
+              : "bg-purple-100 text-purple-600";
+
+          container.innerHTML += `
+                <div class="flex justify-between items-center p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition">
+                    <div>
+                        <div class="flex items-center">
+                            <span class="font-bold text-gray-800 text-sm">${v.model}</span>
+                            ${isPrimary}
+                        </div>
+                        <div class="text-xs text-gray-500 font-mono mt-0.5">${v.registerNumber}</div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] ${roleBadge} px-2 py-1 rounded font-bold uppercase">${item.role}</span>
+                        <div class="text-[10px] text-gray-400 mt-1">${v.vehicleType}</div>
+                    </div>
+                </div>`;
+        });
+      }
+
+      async function handleTopUp() {
+        const amount = document.getElementById("topup-amount").value;
+        if (!amount || amount <= 0) return alert("Enter valid amount");
+
+        try {
+          const res = await fetchAPI("/wallet/topup", "POST", {
+            amount: parseFloat(amount),
+            paymentMethod: "UPI",
+          });
+          alert("Wallet updated!");
+          if (res.newBalance !== undefined) {
+            document.getElementById("wallet-balance").innerText =
+              res.newBalance.toFixed(2);
+          }
+          document.getElementById("topup-amount").value = "";
+        } catch (e) {
+          alert(e.message);
+        }
+      }
+
+      async function handleLocationUpdate() {
+        try {
+          // If backend returns text "Location updated", fetchAPI now handles it correctly
+          const response = await fetchAPI("/user/location", "PUT", {
+            latitude: document.getElementById("loc-lat").value,
+            longitude: document.getElementById("loc-lon").value,
+          });
+          alert(response.message || response); // Show text or JSON message
+        } catch (e) {
+          alert(e.message);
+        }
+      }
+
+      function geoLocate() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition((position) => {
+            document.getElementById("loc-lat").value = position.coords.latitude;
+            document.getElementById("loc-lon").value =
+              position.coords.longitude;
+          });
+        } else {
+          alert("Geolocation is not supported by this browser.");
+        }
+      }
+
+      function logout() {
+        localStorage.removeItem("parkease_token");
+        localStorage.removeItem("parkease_user");
+        window.location.href = "auth.html";
+      }
+
+      init();
+    </script>
+  </body>
+</html>

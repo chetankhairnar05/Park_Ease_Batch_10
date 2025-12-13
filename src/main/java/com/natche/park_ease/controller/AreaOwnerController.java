@@ -92,17 +92,7 @@ public class AreaOwnerController {
         }
     }
 
-    //get all areas owned by area owner and admin
-    // @GetMapping("/my-areas")
-    // @PreAuthorize("hasRole('AREA_OWNER') or hasRole('ADMIN')")
-    // public ResponseEntity<?> getMyAreas(Principal principal) {
-    //     try {
-    //         List<ParkingArea> areas = areaOwnerService.getAreasByOwner(principal.getName());
-    //         return ResponseEntity.ok(areas);
-    //     } catch (RuntimeException e) {
-    //         return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-    //     }
-    // }
+    
     @GetMapping("/my-areas")
     @PreAuthorize("hasRole('AREA_OWNER') or hasRole('ADMIN')")
     public ResponseEntity<?> getMyAreas(Principal principal) {
@@ -120,17 +110,7 @@ public class AreaOwnerController {
         }
     }
 
-    // //get all guards recruited by area owner and admin by area id passed in path variable
-    // @GetMapping("/area/{areaId}/guards")
-    // @PreAuthorize("hasRole('AREA_OWNER') or hasRole('ADMIN')")
-    // public ResponseEntity<?> getGuardsByArea(@PathVariable Long areaId, Principal principal) {
-    //     try {
-    //         List<Map<String, Object>> guards = areaOwnerService.getGuardsByArea(areaId, principal.getName());
-    //         return ResponseEntity.ok(guards);
-    //     } catch (RuntimeException e) {
-    //         return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-    //     }
-    // }
+    
     @GetMapping("/area/{areaId}/guards")
     @PreAuthorize("hasRole('AREA_OWNER') or hasRole('ADMIN')")
     public ResponseEntity<?> getGuardsByArea(@PathVariable Long areaId, Principal principal) {

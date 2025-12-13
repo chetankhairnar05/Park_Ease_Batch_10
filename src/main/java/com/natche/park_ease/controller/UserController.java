@@ -37,12 +37,7 @@ public class UserController {
         return ResponseEntity.ok("Location updated");
     }
     
-    // @GetMapping("/profile")
-    // public ResponseEntity<?> getProfile(Principal principal) {
-    //     User user = userRepository.findByEmailOrPhone(principal.getName(), principal.getName()).orElseThrow();
-        
-    //     return ResponseEntity.ok(user); // Returns wallet balance, role etc.
-    // }
+    
 
     @GetMapping("/profile")
     public ResponseEntity<UserProfileDto> getProfile(Principal principal) {
@@ -56,12 +51,7 @@ public class UserController {
         // 3. Return DTO
         return ResponseEntity.ok(response);
     }
-    // @GetMapping("/vehicles")
-    // public ResponseEntity<?> getUserVehicles(Principal principal) {
-    //     User user = userRepository.findByEmailOrPhone(principal.getName(), principal.getName()).orElseThrow();
-        
-    //     return ResponseEntity.ok(userVehicleAccessRepository.findByUser_UserId(user.getUserId())); 
-    // }
+    
 
      @GetMapping("/vehicles")
     public ResponseEntity<List<UserVehicleAccessDto>> getUserVehicles(Principal principal) {

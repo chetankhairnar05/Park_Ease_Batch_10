@@ -75,23 +75,6 @@ public class SecurityConfig {
 
         return http.build();
     }
-
-    // CORS configuration (matches your old working setup)
-    // @Bean
-    // public CorsConfigurationSource corsConfigurationSource() {
-
-    //     CorsConfiguration config = new CorsConfiguration();
-    //     config.setAllowedOriginPatterns(Arrays.asList("*")); // Allow all origins
-    //     config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    //     config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type","X-Auth-Token"));
-    //     config.setAllowCredentials(true);
-
-    //     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    //     source.registerCorsConfiguration("/**", config);
-
-    //     return source;
-    // }
-
     // ... inside the class ...
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

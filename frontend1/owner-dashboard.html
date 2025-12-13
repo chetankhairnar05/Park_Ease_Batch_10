@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Park Ease - Owner Console</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .slot-tile:hover {
+        transform: scale(1.05);
+        cursor: pointer;
+        border-color: #6366f1;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-amber-900 text-white shadow-lg sticky top-0 z-50">
+      <div
+        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between"
+      >
+        <div class="flex items-center gap-3">
+          <div class="bg-amber-700 p-1.5 rounded-lg">🏢</div>
+          <h1 class="font-bold text-lg tracking-wide">Owner Console</h1>
+        </div>
+        <div class="flex items-center gap-4">
+          <span
+            id="owner-name"
+            class="text-sm text-amber-200 font-medium hidden sm:block"
+            >Owner</span
+          >
+          <a
+            href="dashboard.html"
+            class="text-sm bg-amber-800 hover:bg-amber-700 px-3 py-1.5 rounded-lg transition"
+            >Back to User View</a
+          >
+        </div>
+      </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- TOP ROW: Area Selection & Creation -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <!-- Area List -->
+        <div class="lg:col-span-1">
+          <div
+            class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full"
+          >
+            <div
+              class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center"
+            >
+              <h2 class="font-bold text-gray-700 text-sm">My Properties</h2>
+              <button
+                onclick="toggleCreateArea()"
+                class="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded font-bold hover:bg-amber-200"
+              >
+                + New Area
+              </button>
+            </div>
+            <div
+              id="area-list"
+              class="divide-y divide-gray-100 max-h-[400px] overflow-y-auto"
+            >
+              <div class="p-6 text-center text-gray-400 text-xs">
+                Loading areas...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Context Area: Selected Area Details (Hidden initially) -->
+        <div id="selected-area-panel" class="lg:col-span-2 hidden">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex justify-between items-start mb-6">
+              <div>
+                <h2 id="sa-name" class="text-2xl font-bold text-gray-900">
+                  Area Name
+                </h2>
+                <p id="sa-address" class="text-sm text-gray-500">
+                  Address line...
+                </p>
+              </div>
+              <div class="text-right">
+                <span
+                  id="sa-id"
+                  class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded"
+                  >ID: --</span
+                >
+                <button
+                  onclick="disableArea()"
+                  class="block mt-2 text-xs text-red-600 hover:underline font-bold"
+                >
+                  Disable (Maintenance Mode)
+                </button>
+              </div>
+            </div>
+
+            <!-- TABS -->
+            <div class="border-b border-gray-200 mb-6">
+              <nav class="-mb-px flex space-x-8">
+                <button
+                  onclick="switchTab('slots')"
+                  id="tab-slots"
+                  class="border-amber-500 text-amber-600 whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm"
+                >
+                  Slots & Config
+                </button>
+                <button
+                  onclick="switchTab('guards')"
+                  id="tab-guards"
+                  class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm"
+                >
+                  Guard Staffing
+                </button>
+              </nav>
+            </div>
+
+            <!-- TAB: SLOTS -->
+            <div id="view-slots">
+              <div
+                class="bg-gray-50 rounded p-4 h-[400px] overflow-y-auto border border-gray-100"
+              >
+                <div
+                  class="flex justify-between items-center mb-4 sticky top-0 bg-gray-50 pb-2 z-10"
+                >
+                  <h3 class="text-xs font-bold text-gray-500 uppercase">
+                    Live Slot Grid
+                  </h3>
+                  <div class="text-[10px] text-gray-400">
+                    Click any slot to edit
+                  </div>
+                </div>
+
+                <!-- Grid Container -->
+                <div
+                  id="live-slots-grid"
+                  class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3"
+                >
+                  <!-- Slots injected here -->
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB: GUARDS -->
+            <div id="view-guards" class="hidden">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Recruit Form -->
+                <div
+                  class="bg-amber-50 p-4 rounded-lg border border-amber-100 h-fit"
+                >
+                  <h3 class="text-xs font-bold text-amber-800 uppercase mb-3">
+                    Recruit New Guard
+                  </h3>
+                  <div class="space-y-3">
+                    <input
+                      id="g-name"
+                      class="w-full text-xs p-2.5 rounded border border-amber-200"
+                      placeholder="Guard Name"
+                    />
+                    <input
+                      id="g-email"
+                      class="w-full text-xs p-2.5 rounded border border-amber-200"
+                      placeholder="Email"
+                    />
+                    <input
+                      id="g-phone"
+                      class="w-full text-xs p-2.5 rounded border border-amber-200"
+                      placeholder="Phone"
+                    />
+                    <input
+                      id="g-pass"
+                      type="password"
+                      class="w-full text-xs p-2.5 rounded border border-amber-200"
+                      placeholder="Password"
+                    />
+                    <button
+                      onclick="recruitGuard()"
+                      class="w-full bg-amber-600 text-white text-xs py-2.5 rounded font-bold hover:bg-amber-700 shadow-sm"
+                    >
+                      Recruit
+                    </button>
+                  </div>
+                </div>
+                <!-- Guard List -->
+                <div class="bg-white p-4 rounded-lg border border-gray-100">
+                  <h3 class="text-xs font-bold text-gray-500 uppercase mb-3">
+                    Active Guards
+                  </h3>
+                  <div id="guard-list" class="space-y-3">
+                    <p class="text-xs text-gray-400">
+                      Select area to see guards.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL: CREATE AREA -->
+      <div
+        id="modal-create"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm"
+      >
+        <div
+          class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto"
+        >
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-bold text-gray-900">
+              Create New Parking Area
+            </h2>
+            <button
+              onclick="toggleCreateArea()"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+          </div>
+          <form onsubmit="createArea(event)" class="space-y-3">
+            <input
+              id="ca-name"
+              class="w-full border p-2 rounded text-sm focus:ring-amber-500"
+              placeholder="Area Name"
+              required
+            />
+            <input
+              id="ca-addr"
+              class="w-full border p-2 rounded text-sm focus:ring-amber-500"
+              placeholder="Address"
+              required
+            />
+            <label class="block text-xs font-bold text-gray-500 mt-2"
+              >Enter Coordinates, latitude and longitude:</label
+            >
+            <div class="grid grid-cols-2 gap-2">
+              <input
+                id="ca-lat"
+                class="border p-2 rounded text-sm"
+                placeholder="Latitude"
+                value="22.7"
+              />
+              <input
+                id="ca-lon"
+                class="border p-2 rounded text-sm"
+                placeholder="Longitude"
+                value="75.8"
+              />
+            </div>
+            <label class="block text-xs font-bold text-gray-500 mt-2"
+              >Capacity</label
+            >
+            <div class="grid grid-cols-3 gap-2">
+              <input
+                id="cap-s"
+                type="number"
+                class="border p-2 rounded text-sm"
+                placeholder="Small"
+                required
+              />
+              <input
+                id="cap-m"
+                type="number"
+                class="border p-2 rounded text-sm"
+                placeholder="Med"
+                required
+              />
+              <input
+                id="cap-l"
+                type="number"
+                class="border p-2 rounded text-sm"
+                placeholder="Large"
+                required
+              />
+            </div>
+            <label class="block text-xs font-bold text-gray-500 mt-2"
+              >Hourly Rates (₹)</label
+            >
+            <div class="grid grid-cols-3 gap-2">
+              <input
+                id="rate-s"
+                type="number"
+                class="border p-2 rounded text-sm"
+                placeholder="Small"
+                required
+              />
+              <input
+                id="rate-m"
+                type="number"
+                class="border p-2 rounded text-sm"
+                placeholder="Med"
+                required
+              />
+              <input
+                id="rate-l"
+                type="number"
+                class="border p-2 rounded text-sm"
+                placeholder="Large"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              class="w-full bg-amber-600 text-white font-bold py-3 rounded mt-4 hover:bg-amber-700 shadow-md"
+            >
+              Create & Generate Slots
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- MODAL: EDIT SLOT -->
+      <div
+        id="modal-edit-slot"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm"
+      >
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-bold text-gray-900">
+              Edit Slot
+              <span id="edit-slot-display" class="text-indigo-600"></span>
+            </h2>
+            <button
+              onclick="toggleEditSlot()"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+          </div>
+          <input type="hidden" id="edit-slot-id" />
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-gray-500 mb-1"
+                >Status</label
+              >
+              <select
+                id="edit-slot-status"
+                class="w-full border p-2 rounded text-sm bg-white"
+              >
+                <option value="AVAILABLE">Available (Green)</option>
+                <option value="MAINTENANCE">Maintenance (Grey)</option>
+                <option value="OCCUPIED">Occupied (Red)</option>
+                <option value="RESERVED">Reserved (Yellow)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-500 mb-1"
+                >Hourly Rate (₹)</label
+              >
+              <input
+                type="number"
+                id="edit-slot-rate"
+                class="w-full border p-2 rounded text-sm"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-500 mb-1"
+                >Floor</label
+              >
+              <input
+                type="number"
+                id="edit-slot-floor"
+                class="w-full border p-2 rounded text-sm"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-500 mb-1"
+                >Slot Number (Name)</label
+              >
+              <input
+                type="text"
+                id="edit-slot-number"
+                class="w-full border p-2 rounded text-sm"
+              />
+            </div>
+
+            <button
+              onclick="submitSlotUpdate()"
+              class="w-full bg-indigo-600 text-white font-bold py-2 rounded hover:bg-indigo-700"
+            >
+              Update Slot
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:8080/api";
+      const token = localStorage.getItem("parkease_token");
+      let selectedAreaId = null;
+
+      if (!token) window.location.href = "auth.html";
+
+      async function init() {
+        try {
+          const user = await fetchAPI("/user/profile");
+          if (user.role !== "AREA_OWNER" && user.role !== "ADMIN") {
+            alert("Access Denied: Owners Only");
+            window.location.href = "dashboard.html";
+            return;
+          }
+          document.getElementById("owner-name").innerText = user.name;
+          loadAreas();
+        } catch (e) {
+          console.error(e);
+          alert("Session Error");
+          window.location.href = "auth.html";
+        }
+      }
+
+      async function fetchAPI(endpoint, method = "GET", body = null) {
+        const headers = {
+          "Content-Type": "application/json",
+          "X-Auth-Token": token,
+        };
+        const opts = { method, headers };
+        if (body) opts.body = JSON.stringify(body);
+
+        const res = await fetch(`${API_BASE}${endpoint}`, opts);
+        const text = await res.text();
+
+        if (!res.ok) throw new Error(text);
+        try {
+          return JSON.parse(text);
+        } catch {
+          return text;
+        }
+      }
+
+      // --- AREA MANAGEMENT ---
+      async function loadAreas() {
+        const list = document.getElementById("area-list");
+        try {
+          const areas = await fetchAPI("/area-owner/my-areas");
+
+          if (areas.length === 0) {
+            list.innerHTML =
+              '<div class="p-6 text-center text-gray-400 text-xs">No areas found. Create one!</div>';
+            return;
+          }
+
+          let html = "";
+          areas.forEach((a) => {
+            html += `
+                    <div onclick="selectArea(${a.areaId}, '${a.name}', '${a.address}')" 
+                         class="p-4 hover:bg-amber-50 cursor-pointer transition border-l-4 border-transparent hover:border-amber-500 group">
+                        <div class="font-bold text-gray-800 text-sm group-hover:text-amber-800">${a.name}</div>
+                        <div class="text-xs text-gray-500 truncate">${a.address}</div>
+                    </div>`;
+          });
+          list.innerHTML = html;
+        } catch (err) {
+          list.innerHTML = `<div class="p-4 text-red-500 text-xs">Error: ${err.message}</div>`;
+        }
+      }
+
+      async function createArea(e) {
+        e.preventDefault();
+        const payload = {
+          name: document.getElementById("ca-name").value,
+          address: document.getElementById("ca-addr").value,
+          latitude: document.getElementById("ca-lat").value,
+          longitude: document.getElementById("ca-lon").value,
+          capacitySmall: parseInt(document.getElementById("cap-s").value),
+          capacityMedium: parseInt(document.getElementById("cap-m").value),
+          capacityLarge: parseInt(document.getElementById("cap-l").value),
+          baseRateSmall: parseFloat(document.getElementById("rate-s").value),
+          baseRateMedium: parseFloat(document.getElementById("rate-m").value),
+          baseRateLarge: parseFloat(document.getElementById("rate-l").value),
+        };
+
+        try {
+          const res = await fetchAPI(
+            "/area-owner/create-area",
+            "POST",
+            payload
+          );
+          alert(res.message);
+          toggleCreateArea();
+          loadAreas();
+        } catch (err) {
+          alert("Creation Failed: " + err.message);
+        }
+      }
+
+      function toggleCreateArea() {
+        document.getElementById("modal-create").classList.toggle("hidden");
+      }
+
+      function toggleEditSlot() {
+        document.getElementById("modal-edit-slot").classList.toggle("hidden");
+      }
+
+      // --- CONTEXT LOGIC ---
+      function selectArea(id, name, addr) {
+        selectedAreaId = id;
+        document
+          .getElementById("selected-area-panel")
+          .classList.remove("hidden");
+        document.getElementById("sa-name").innerText = name;
+        document.getElementById("sa-address").innerText = addr;
+        document.getElementById("sa-id").innerText = `ID: ${id}`;
+        loadSlots(id);
+        loadGuards(id);
+      }
+
+      function switchTab(tab) {
+        const slotsView = document.getElementById("view-slots");
+        const guardsView = document.getElementById("view-guards");
+        const tSlots = document.getElementById("tab-slots");
+        const tGuards = document.getElementById("tab-guards");
+
+        if (tab === "slots") {
+          slotsView.classList.remove("hidden");
+          guardsView.classList.add("hidden");
+          tSlots.classList.add("border-amber-500", "text-amber-600");
+          tGuards.classList.remove("border-amber-500", "text-amber-600");
+        } else {
+          slotsView.classList.add("hidden");
+          guardsView.classList.remove("hidden");
+          tGuards.classList.add("border-amber-500", "text-amber-600");
+          tSlots.classList.remove("border-amber-500", "text-amber-600");
+        }
+      }
+
+      // --- SLOTS (NEW VISUAL EDITOR) ---
+      async function loadSlots(id) {
+        const grid = document.getElementById("live-slots-grid");
+        grid.innerHTML =
+          '<div class="col-span-4 text-xs text-center">Loading slots...</div>';
+
+        try {
+          const slots = await fetchAPI(`/area-owner/area/${id}/slots`);
+          grid.innerHTML = "";
+
+          slots.forEach((s) => {
+            let color = "bg-gray-200 text-gray-500";
+            if (s.status === "AVAILABLE")
+              color =
+                "bg-green-100 text-green-700 border border-green-200 hover:bg-green-200";
+            if (s.status === "OCCUPIED")
+              color =
+                "bg-red-100 text-red-700 border border-red-200 hover:bg-red-200";
+            if (s.status === "RESERVED")
+              color =
+                "bg-yellow-100 text-yellow-700 border border-yellow-200 hover:bg-yellow-200";
+            if (s.status === "MAINTENANCE")
+              color =
+                "bg-gray-700 text-gray-300 border border-gray-600 hover:bg-gray-600";
+
+            // Create element programmatically to avoid quote escaping issues
+            const div = document.createElement("div");
+            div.className = `slot-tile ${color} rounded p-2 text-center transition-all shadow-sm`;
+            div.innerHTML = `
+                        <div class="text-[10px] font-bold">${s.slotNumber}</div>
+                        <div class="text-[8px] opacity-70 mt-1">${s.status.substring(
+                          0,
+                          4
+                        )}</div>
+                        <div class="text-[8px] mt-1">₹${s.baseHourlyRate}</div>
+                    `;
+            div.onclick = () => openSlotEditor(s);
+            grid.appendChild(div);
+          });
+        } catch (err) {
+          grid.innerHTML = `<div class="col-span-4 text-xs text-red-500">${err.message}</div>`;
+        }
+      }
+
+      function openSlotEditor(slot) {
+        document.getElementById("edit-slot-id").value = slot.slotId;
+        document.getElementById("edit-slot-display").innerText =
+          slot.slotNumber;
+        document.getElementById("edit-slot-number").value = slot.slotNumber;
+        document.getElementById("edit-slot-floor").value = slot.floor;
+        document.getElementById("edit-slot-rate").value = slot.baseHourlyRate;
+        document.getElementById("edit-slot-status").value = slot.status;
+
+        toggleEditSlot();
+      }
+
+      async function submitSlotUpdate() {
+        if (!selectedAreaId) return;
+        const slotId = document.getElementById("edit-slot-id").value;
+
+        // Construct payload as a LIST with one item
+        const payload = [
+          {
+            slotId: parseInt(slotId),
+            slotNumber: document.getElementById("edit-slot-number").value,
+            floor: parseInt(document.getElementById("edit-slot-floor").value),
+            hourlyRate: parseFloat(
+              document.getElementById("edit-slot-rate").value
+            ),
+            status: document.getElementById("edit-slot-status").value,
+          },
+        ];
+
+        try {
+          const res = await fetchAPI(
+            `/area-owner/area/${selectedAreaId}/slots/update`,
+            "PUT",
+            payload
+          );
+          alert(res.message);
+          toggleEditSlot();
+          loadSlots(selectedAreaId); // Refresh UI
+        } catch (err) {
+          alert("Update Failed: " + err.message);
+        }
+      }
+
+      async function disableArea() {
+        if (
+          !selectedAreaId ||
+          !confirm("Set ALL slots to Maintenance? Users won't be able to book.")
+        )
+          return;
+        try {
+          const res = await fetchAPI(
+            `/area-owner/area/${selectedAreaId}/disable`,
+            "PUT"
+          );
+          alert(res.message);
+          loadSlots(selectedAreaId);
+        } catch (err) {
+          alert(err.message);
+        }
+      }
+
+      // --- GUARDS (FIXED) ---
+      async function loadGuards(id) {
+        const list = document.getElementById("guard-list");
+        try {
+          // Returns list of Guard Entities/DTOs
+          const guards = await fetchAPI(`/area-owner/area/${id}/guards`);
+          list.innerHTML = "";
+
+          // Debug log to console if you open dev tools
+          console.log("Loaded Guards:", guards);
+
+          if (!Array.isArray(guards) || guards.length === 0) {
+            list.innerHTML =
+              '<p class="text-xs text-gray-400 italic">No guards hired.</p>';
+            return;
+          }
+
+          guards.forEach((g) => {
+            // Robust extraction of User ID
+            // Case 1: Backend sends { user: { userId: 5, name: "..." } }
+            // Case 2: Backend sends flattened { userId: 5, name: "..." }
+            let uid, name;
+
+            if (g.user && g.user.userId) {
+              uid = g.user.userId;
+              name = g.user.name;
+            } else if (g.userId) {
+              uid = g.userId;
+              name = g.name;
+            } else {
+              console.error("Unknown Guard Structure:", g);
+              return;
+            }
+
+            const div = document.createElement("div");
+            div.className =
+              "flex justify-between items-center p-3 bg-white border rounded shadow-sm";
+            div.innerHTML = `
+                        <div>
+                            <span class="font-bold text-gray-700 text-xs">${name}</span>
+                            <span class="text-gray-400 block text-[10px]">ID: ${uid}</span>
+                        </div>
+                        <button class="text-red-500 hover:text-white hover:bg-red-500 font-bold border border-red-200 px-3 py-1 rounded text-xs transition">Fire</button>
+                    `;
+            // Attach event listener directly to avoid string escaping issues with IDs
+            div.querySelector("button").onclick = () => fireGuard(uid);
+            list.appendChild(div);
+          });
+        } catch (err) {
+          list.innerHTML = `<p class="text-xs text-red-500">${err.message}</p>`;
+        }
+      }
+
+      async function recruitGuard() {
+        if (!selectedAreaId) return;
+        const payload = {
+          areaId: selectedAreaId,
+          name: document.getElementById("g-name").value,
+          email: document.getElementById("g-email").value,
+          phone: document.getElementById("g-phone").value,
+          password: document.getElementById("g-pass").value,
+        };
+        try {
+          const res = await fetchAPI(
+            "/area-owner/recruit-guard",
+            "POST",
+            payload
+          );
+          alert(res.message);
+          // Clear form
+          document.getElementById("g-name").value = "";
+          document.getElementById("g-email").value = "";
+          document.getElementById("g-phone").value = "";
+          document.getElementById("g-pass").value = "";
+          loadGuards(selectedAreaId);
+        } catch (err) {
+          alert(err.message);
+        }
+      }
+
+      async function fireGuard(userId) {
+        if (!confirm("Fire this guard? They will become a Driver.")) return;
+        try {
+          const res = await fetchAPI(
+            `/area-owner/fire-guard/${userId}`,
+            "POST"
+          );
+          alert(res.message);
+          loadGuards(selectedAreaId);
+        } catch (err) {
+          alert(err.message);
+        }
+      }
+
+      init();
+    </script>
+  </body>
+</html>
