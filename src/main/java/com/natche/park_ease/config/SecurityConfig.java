@@ -56,7 +56,29 @@ public class SecurityConfig {
 
             // Public and protected routes
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/error").permitAll() 
+                .requestMatchers("/error").permitAll() .requestMatchers(
+        "/", 
+        "/index.html",
+        "/auth.html",
+        "/dashboard.html",
+        "/admin-dashboard.html",
+        "/owner-dashboard.html",
+        "/booking.html",
+        "/slots.html",
+        "/profile.html",
+        "/pay.html",
+        "/vehicle-register.html",
+
+        // allow all static assets
+        "/**/*.html",
+        "/**/*.css",
+        "/**/*.js",
+        "/**/*.png",
+        "/**/*.jpg",
+        "/**/*.jpeg",
+        "/**/*.svg",
+        "/**/*.ico"
+    ).permitAll()
     
     // Existing Swagger matchers (keep these)
     .requestMatchers(

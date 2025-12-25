@@ -57,3 +57,8 @@ frontend1/booking1.html
 frontend1/booking11.html
 frontend1/dashboard5.html
 frontend1/owner-dashboard5.html
+src/main/resources/static/active-bookings1.html
+src/main/resources/static/booking1.html
+src/main/resources/static/booking11.html
+src/main/resources/static/dashboard5.html
+src/main/resources/static/owner-dashboard5.html

@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Park Ease - Booking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 min-h-screen flex flex-col items-center p-4">
+    <!-- Loading Overlay -->
+    <div
+      id="loading-overlay"
+      class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center"
+    >
+      <div
+        class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"
+      ></div>
+      <p class="text-gray-500 text-sm">Loading Slot Details...</p>
+    </div>
+
+    <!-- Header -->
+    <div
+      class="w-full max-w-lg bg-white rounded-xl shadow-sm p-4 mb-4 flex justify-between items-center"
+    >
+      <div class="flex items-center gap-2">
+        <span
+          class="bg-indigo-100 text-indigo-700 p-1.5 rounded text-xs font-bold"
+          >P</span
+        >
+        <h1 class="font-bold text-gray-800 text-sm">Booking</h1>
+      </div>
+      <a
+        href="dashboard.html"
+        class="text-xs text-gray-500 hover:text-gray-900 font-medium"
+        >Go Back</a
+      >
+    </div>
+
+    <!-- Error Message -->
+    <div
+      id="error-box"
+      class="hidden w-full max-w-lg bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm text-center"
+    ></div>
+    <!-- Error Message -->
+    <div
+      class="w-full max-w-lg border border-green-200 text-green-700 px-4 py-3 rounded-xl mb-4 text-sm text-center"
+    >
+      <!-- Note -->
+      <div
+        class="px-4 py-2 rounded-full text-xs font-medium backdrop-blur-sm bg-gray-300 mx-3"
+      >
+        <span
+          >Important Note: Fast-Forward Mode: 1 second in real life = 1 minute
+          in the app. (Speeds up testing for long bookings).</span
+        >
+      </div>
+    </div>
+
+    <!-- STAGE 1: CONFIRMATION -->
+    <div
+      id="stage-confirm"
+      class="hidden w-full max-w-lg bg-white rounded-xl shadow-lg p-6"
+    >
+      <!-- Slot Info -->
+      <div class="border-b border-gray-100 pb-4 mb-4">
+        <h2
+          id="b-area-name"
+          class="text-lg font-bold text-gray-900 leading-tight"
+        >
+          Loading...
+        </h2>
+        <p id="b-address" class="text-xs text-gray-500 mt-1">Loading...</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 mb-6">
+        <div
+          class="bg-gray-50 p-3 rounded-lg text-center border border-gray-100"
+        >
+          <span
+            class="block text-[10px] text-gray-400 uppercase tracking-wider font-bold"
+            >Slot No</span
+          >
+          <span
+            id="b-slot-no"
+            class="font-mono text-xl font-bold text-indigo-600"
+            >--</span
+          >
+        </div>
+        <div
+          class="bg-gray-50 p-3 rounded-lg text-center border border-gray-100"
+        >
+          <span
+            class="block text-[10px] text-gray-400 uppercase tracking-wider font-bold"
+            >Type</span
+          >
+          <span id="b-slot-type" class="font-bold text-gray-700 text-sm"
+            >--</span
+          >
+        </div>
+      </div>
+
+      <!-- Info: Grace Period & Waiver -->
+      <div
+        class="bg-amber-50 p-3 rounded-lg border border-amber-100 mb-6 text-xs text-amber-800"
+      >
+        <p class="font-bold mb-1">⏱️ Policy Info:</p>
+        <p>• Arrive within <strong>10 mins</strong>: Reservation is FREE.</p>
+        <p>• Must arrive within <strong>30 mins</strong> or booking cancels.</p>
+      </div>
+
+      <!-- Rates -->
+      <div
+        class="space-y-2 mb-6 text-sm bg-indigo-50 p-4 rounded-lg border border-indigo-100"
+      >
+        <div class="flex justify-between">
+          <span class="text-indigo-600/70">Parking Rate</span>
+          <span class="font-bold text-indigo-900"
+            >₹<span id="b-rate-park">0</span>/hr</span
+          >
+        </div>
+        <div class="flex justify-between border-t border-indigo-200 pt-2 mt-2">
+          <span class="text-indigo-600/70">Reservation Rate</span>
+          <span class="font-bold text-indigo-900"
+            >₹<span id="b-rate-res">0</span>/hr</span
+          >
+        </div>
+      </div>
+
+      <!-- Vehicle Selection -->
+      <div class="mb-6">
+        <label class="block text-xs font-bold text-gray-500 uppercase mb-2"
+          >Select Vehicle</label
+        >
+        <select
+          id="vehicle-select"
+          class="w-full p-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition"
+        >
+          <option value="">Loading vehicles...</option>
+        </select>
+        <p id="veh-error" class="text-xs text-red-500 mt-2 hidden font-bold">
+          Please select a valid vehicle.
+        </p>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-3">
+        <button
+          onclick="createBooking('RESERVED')"
+          class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3.5 rounded-xl shadow-sm text-sm transition transform active:scale-95"
+        >
+          Reserve Slot
+        </button>
+        <button
+          onclick="createBooking('ACTIVE_PARKING')"
+          class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-sm text-sm transition transform active:scale-95"
+        >
+          Park Now
+        </button>
+      </div>
+    </div>
+
+    <!-- STAGE 2: LIVE SESSION -->
+    <div
+      id="stage-live"
+      class="hidden w-full max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200 fade-in"
+    >
+      <div
+        id="status-header"
+        class="bg-gray-800 p-8 text-center text-white transition-colors duration-500"
+      >
+        <p class="text-xs font-bold uppercase tracking-widest opacity-70 mb-1">
+          Status
+        </p>
+        <h2 id="live-status" class="text-3xl font-black tracking-tight">
+          PROCESSING
+        </h2>
+        <p id="live-timer" class="font-mono text-xl mt-2 opacity-90">00:00</p>
+      </div>
+      <div class="p-6 space-y-4">
+        <div
+          id="live-msg"
+          class="text-center text-sm text-gray-600 animate-pulse"
+        >
+          Connecting to system...
+        </div>
+        <button
+          id="btn-arrive"
+          onclick="wsArrive()"
+          class="hidden w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-lg shadow-lg"
+        >
+          📷 Scan Arrival QR
+        </button>
+        <button
+          id="btn-exit"
+          onclick="wsExit()"
+          class="hidden w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-lg shadow-lg"
+        >
+          🛑 Stop Timer & Pay
+        </button>
+
+        <div
+          id="receipt-panel"
+          class="hidden bg-gray-50 rounded-xl p-6 border border-gray-200 text-center"
+        >
+          <div
+            class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl"
+          >
+            ✓
+          </div>
+          <h3 class="font-bold text-gray-800">Payment Successful</h3>
+          <div class="text-3xl font-bold text-gray-900 my-4">
+            ₹<span id="final-bill">0.00</span>
+          </div>
+          <a
+            href="dashboard.html"
+            class="inline-block bg-gray-900 text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-black transition"
+            >Return to Dashboard</a
+          >
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:8080/api";
+      const SOCKET_URL = "http://localhost:8080/ws";
+      const token = localStorage.getItem("parkease_token");
+      const urlParams = new URLSearchParams(window.location.search);
+      const slotId = urlParams.get("slotId");
+
+      // Removed areaId from required params since API provides it
+      let areaId = urlParams.get("areaId");
+
+      let stompClient = null;
+      let activeBookingId = null;
+      let timerInterval = null;
+      let slotInfo = null;
+
+      if (!token) window.location.href = "auth.html";
+
+      async function init() {
+        if (!slotId) {
+          showError("Invalid Booking Link. Slot ID missing.");
+          return;
+        }
+
+        try {
+          // 1. Fetch Slot Details
+          slotInfo = await fetchAPI(`/slots/${slotId}/details`);
+
+          // Use the areaId from the backend response if available
+          if (slotInfo.areaId) {
+            areaId = slotInfo.areaId;
+          }
+
+          // 2. Fetch Vehicles
+          const vehicles = await fetchAPI("/user/vehicles");
+
+          // 3. Populate UI
+          renderConfirmationUI(slotInfo, vehicles);
+
+          // 4. Hide Loader
+          document.getElementById("loading-overlay").classList.add("hidden");
+          document.getElementById("stage-confirm").classList.remove("hidden");
+        } catch (err) {
+          showError(err.message);
+        }
+      }
+
+      async function fetchAPI(endpoint, method = "GET", body = null) {
+        const headers = {
+          "Content-Type": "application/json",
+          "X-Auth-Token": token,
+        };
+        const opts = { method, headers };
+        if (body) opts.body = JSON.stringify(body);
+
+        const res = await fetch(`${API_BASE}${endpoint}`, opts);
+        const text = await res.text();
+
+        if (!res.ok) {
+          // Try to parse error JSON for better message
+          try {
+            const errJson = JSON.parse(text);
+            throw new Error(errJson.error || text);
+          } catch {
+            throw new Error(text || `API Error: ${res.status}`);
+          }
+        }
+
+        try {
+          return JSON.parse(text);
+        } catch {
+          return text;
+        }
+      }
+
+      function renderConfirmationUI(slot, vehicles) {
+        document.getElementById("b-area-name").innerText =
+          slot.areaName || "Unknown Area";
+        document.getElementById("b-address").innerText =
+          slot.address || "Unknown Address";
+        document.getElementById("b-slot-no").innerText =
+          slot.slotNumber || "--";
+        document.getElementById("b-slot-type").innerText =
+          slot.type || "STANDARD";
+        document.getElementById("b-rate-park").innerText = slot.baseRate || 0;
+        document.getElementById("b-rate-res").innerText =
+          slot.reservationRate || slot.baseRate || 0;
+
+        const select = document.getElementById("vehicle-select");
+        select.innerHTML = '<option value="">-- Select Vehicle --</option>';
+
+        // Filter Vehicles Logic
+        const eligible = vehicles.filter((item) => {
+          const vType = item.vehicle.vehicleType;
+          if (slot.type === "SMALL") return vType === "SMALL";
+          if (slot.type === "MEDIUM")
+            return vType === "SMALL" || vType === "MEDIUM";
+          return true; // Large slot fits all
+        });
+
+        if (eligible.length === 0) {
+          const opt = document.createElement("option");
+          opt.text = "No compatible vehicle found";
+          opt.disabled = true;
+          select.appendChild(opt);
+        } else {
+          eligible.forEach((item) => {
+            const opt = document.createElement("option");
+            opt.value = item.vehicle.vehicleId;
+            opt.text = `${item.vehicle.model} (${item.vehicle.registerNumber})`;
+            if (item.isPrimary) opt.selected = true;
+            select.appendChild(opt);
+          });
+        }
+      }
+
+      async function createBooking(status) {
+        const vehicleId = document.getElementById("vehicle-select").value;
+        if (!vehicleId) {
+          document.getElementById("veh-error").classList.remove("hidden");
+          return;
+        }
+
+        // Use areaId obtained from API
+        if (!areaId) {
+          alert("Error: Area ID missing from slot data.");
+          return;
+        }
+
+        document.body.style.cursor = "wait";
+
+        try {
+          const res = await fetchAPI("/bookings/create", "POST", {
+            vehicleId,
+            slotId,
+            areaId: areaId,
+            initialStatus: status,
+          });
+
+          activeBookingId = res.id;
+
+          // Transition UI
+          document.getElementById("stage-confirm").classList.add("hidden");
+          document.getElementById("stage-live").classList.remove("hidden");
+
+          // Start Real-time
+          connectWS();
+          updateLiveUI(res);
+        } catch (e) {
+          alert("Booking Failed: " + e.message);
+        } finally {
+          document.body.style.cursor = "default";
+        }
+      }
+
+      // --- WEBSOCKETS ---
+      function connectWS() {
+        const socket = new SockJS(SOCKET_URL);
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null;
+
+        stompClient.connect({ "X-Auth-Token": token }, () => {
+          stompClient.subscribe("/user/queue/booking-updates", (msg) => {
+            const b = JSON.parse(msg.body);
+            updateLiveUI(b);
+          });
+          stompClient.subscribe("/user/queue/notifications", (msg) => {
+            alert("🔔 " + msg.body);
+            if (msg.body.includes("Cancelled"))
+              window.location.href = "dashboard.html";
+          });
+        });
+      }
+
+      function wsArrive() {
+        stompClient.send(
+          "/app/booking/arrive",
+          {},
+          JSON.stringify({ bookingId: activeBookingId })
+        );
+      }
+      function wsExit() {
+        stompClient.send(
+          "/app/booking/end",
+          {},
+          JSON.stringify({ bookingId: activeBookingId })
+        );
+      }
+
+      function updateLiveUI(booking) {
+        const statusEl = document.getElementById("live-status");
+        const header = document.getElementById("status-header");
+        const btnArrive = document.getElementById("btn-arrive");
+        const btnExit = document.getElementById("btn-exit");
+        const msg = document.getElementById("live-msg");
+
+        statusEl.innerText = booking.status;
+
+        if (
+          booking.status !== "COMPLETED" &&
+          booking.status !== "CANCELLED_NO_SHOW"
+        ) {
+          startTimer();
+        } else {
+          stopTimer();
+        }
+
+        if (booking.status === "RESERVED") {
+          header.className =
+            "bg-amber-500 p-8 text-center text-white transition-colors duration-500";
+          btnArrive.classList.remove("hidden");
+          btnExit.classList.add("hidden");
+          msg.innerHTML =
+            "Spot Reserved.<br>Arrive within 10 mins for free entry.";
+        } else if (booking.status === "ACTIVE_PARKING") {
+          header.className =
+            "bg-emerald-600 p-8 text-center text-white transition-colors duration-500";
+          btnArrive.classList.add("hidden");
+          btnExit.classList.remove("hidden");
+          msg.innerHTML = "Timer Running.<br>Safe Parking!";
+        } else if (booking.status === "COMPLETED") {
+          header.className =
+            "bg-gray-900 p-8 text-center text-white transition-colors duration-500";
+          statusEl.innerText = "PAID";
+          btnExit.classList.add("hidden");
+          msg.classList.add("hidden");
+          document.getElementById("receipt-panel").classList.remove("hidden");
+          document.getElementById("final-bill").innerText = (
+            booking.amountPaid ||
+            booking.finalParkingFee ||
+            0
+          ).toFixed(2);
+        }
+      }
+
+      function startTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        let sec = 0;
+        const el = document.getElementById("live-timer");
+        timerInterval = setInterval(() => {
+          sec++;
+          const m = Math.floor(sec / 60)
+            .toString()
+            .padStart(2, "0");
+          const s = (sec % 60).toString().padStart(2, "0");
+          el.innerText = `${m}:${s}`;
+        }, 1000);
+      }
+      function stopTimer() {
+        clearInterval(timerInterval);
+      }
+
+      function showError(msg) {
+        document.getElementById("loading-overlay").classList.add("hidden");
+        const errBox = document.getElementById("error-box");
+        errBox.innerText = msg;
+        errBox.classList.remove("hidden");
+      }
+
+      init();
+    </script>
+  </body>
+</html>

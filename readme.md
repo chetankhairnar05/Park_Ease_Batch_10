@@ -80,17 +80,16 @@ ParkEaseApplication.java
 ```
 
 # recommended
+
 ```
 git clone https://github.com/chetankhairnar05/Park_Ease_Batch_10.git
 
 cd Park_Ease_Batch_10
 
 .\mvnw.cmd spring-boot:run
+# in windows cmd
 
-# or (explicitly via call operator)
-& '.\mvnw.cmd' spring-boot:run
 ```
-
 
 On first startup, **AdminSeeder** automatically populates the database.
 
@@ -98,8 +97,21 @@ On first startup, **AdminSeeder** automatically populates the database.
 
 Open:
 
+method 1:
+
 ```
-frontend/auth.html
+http://localhost:8080/auth.html
+```
+
+method2:
+
+using live server
+
+install live server vs code extention else javascript will not work
+
+```
+frontend1/auth.html
+#open this using live server
 ```
 
 using **Live Server** (VS Code) or any static server.
@@ -313,5 +325,3 @@ Park Ease demonstrates **real-world backend engineering practices**, including:
 - Transaction safety
 - Real-time communication
 - Business rule enforcement
-
-
