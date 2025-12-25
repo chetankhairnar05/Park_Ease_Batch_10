@@ -79,6 +79,19 @@ Run:
 ParkEaseApplication.java
 ```
 
+# recommended
+```
+git clone https://github.com/chetankhairnar05/Park_Ease_Batch_10.git
+
+cd Park_Ease_Batch_10
+
+.\mvnw.cmd spring-boot:run
+
+# or (explicitly via call operator)
+& '.\mvnw.cmd' spring-boot:run
+```
+
+
 On first startup, **AdminSeeder** automatically populates the database.
 
 ### Frontend
