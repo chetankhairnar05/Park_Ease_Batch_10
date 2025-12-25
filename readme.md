@@ -1,147 +1,304 @@
-# Park Ease – Smart Parking Management System
+# 🅿️ Park Ease – Smart Parking Management System
 
-Park Ease is a production-grade Spring Boot application engineered to address modern urban parking challenges in India. It simulates a complete real-world parking ecosystem across multiple roles—Drivers, Guards, Area Owners, and Administrators—while featuring dynamic slot management, prepaid wallet payments (FASTag model), automated scheduling, and real-time updates.
+**Spring Boot Internship Project**
 
----
-
-### How to Work
-
-open auth.html in live server , we have a admin with ,
-email = admin@parkease.com
-password = admin123
-
-admin is responsible for creating area owner
-
-and area owner is responsible for creating parking area
-
-## 1. Overview
-
-Park Ease provides an end-to-end solution for digital parking management, integrating automated gate operations, QR-based arrival workflows, and role-based access control. The system is designed for scalability, operational efficiency, and fast transactions.
+Park Ease is a **production-grade Smart Parking Management System** built using **Spring Boot 3**, designed to simulate real-world urban parking operations.
+It digitizes the complete parking lifecycle—from **remote booking** to **cashless exit**—while supporting **multiple roles**, **dynamic pricing**, **wallet-based payments**, and **real-time updates**.
 
 ---
 
-## 2. System Roles & Responsibilities
+## 📌 Project Highlights
 
-### ADMIN (Super User)
-
-- Platform-level user.
-- Creates and manages Area Owners.
-- Full system governance.
-
-### AREA OWNER
-
-- Manages a specific parking area (mall, station, hospital, etc.).
-- Configures pricing, capacity, and slot status.
-- Recruits and manages Guards.
-
-### GUARD
-
-- Responsible for gate operations.
-- Scans QR to verify driver arrival.
-- Can force-stop parking sessions if required.
-
-### DRIVER
-
-- Books and manages parking.
-- Registers vehicles.
-- Uses wallet for payments.
-- Views bookings and transactions.
+- Stateless **JWT-based Authentication**
+- Role-Based Access Control (**ADMIN, AREA_OWNER, GUARD, DRIVER**)
+- **FAST MODE simulation** (1 second = 1 minute)
+- Real-time updates using **WebSocket (STOMP)**
+- Automated **Indore city data seeding**
+- Wallet + Outstanding Due system (FASTag model)
+- Vehicle-slot compatibility enforcement
+- Production-ready architecture (Service / Repository / DTO layers)
 
 ---
 
-## 3. Smart Booking Lifecycle
+# ⚙️ Setup & Installation (Read This First)
 
-### Reservation
+## 1️⃣ Prerequisites
 
-Driver reserves a slot remotely; reservation timer starts.
-
-### Grace Period (10 Minutes)
-
-If the driver arrives within 10 minutes, the reservation fee is waived.
-
-### No-Show Handling (30 Minutes)
-
-If the driver does not arrive:
-
-- Booking auto-cancels.
-- Penalty amount is charged.
-- Slot returns to AVAILABLE.
-
-### Arrival (QR Scan)
-
-Driver scans QR code at the parking area. Booking becomes **ACTIVE_PARKING**.
-
-### Exit & Billing
-
-Driver ends parking:
-
-- Charges = Reservation Fee + Parking Duration Fee.
-- Wallet auto-deducts amount.
+| Requirement | Version            |
+| ----------- | ------------------ |
+| Java        | JDK 21             |
+| Spring Boot | 3.5.8              |
+| Database    | MySQL 8.0+         |
+| Build Tool  | Maven              |
+| IDE         | IntelliJ / VS Code |
 
 ---
 
-## 4. Wallet System (FASTag-Style)
+## 2️⃣ Database Setup
 
-- Drivers maintain prepaid balance.
-- Auto-debit on exit.
-- If insufficient balance:
-  - Amount becomes **Outstanding Due**.
-  - Account is blocked until dues are cleared.
-
----
-
-## 5. Vehicle Management
-
-- Drivers can register multiple vehicles (bike, car, etc.).
-- One primary vehicle can be selected for one-click booking.
-- Supports “Guest Access” for shared vehicles.
-
----
-
-## 6. Technology Stack
-
-| Layer      | Technology                 |
-| ---------- | -------------------------- |
-| Backend    | Java 21, Spring Boot 4.0.0 |
-| Database   | MySQL                      |
-| Security   | Spring Security 6, JWT     |
-| Real-time  | WebSocket (STOMP)          |
-| Scheduling | Spring Scheduler           |
-| Build Tool | Maven                      |
-
----
-
-## 7. Installation & Setup
-
-### 1. Database Setup (MySQL)
+Create the database manually before running the app:
 
 ```sql
-CREATE DATABASE parking_db;
+CREATE DATABASE park_ease;
 ```
 
-### 2. Configure application.properties
+---
 
-```sql
+## 3️⃣ Application Configuration
+
+Update `src/main/resources/application.properties`:
+
+```properties
+# Server
 server.port=8080
 
-spring.datasource.url=jdbc:mysql://localhost:3306/parking_db?createDatabaseIfNotExist=true
+# MySQL Configuration
+spring.datasource.url=jdbc:mysql://localhost:3306/park_ease?createDatabaseIfNotExist=true
 spring.datasource.username=YOUR_MYSQL_USERNAME
 spring.datasource.password=YOUR_MYSQL_PASSWORD
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 
+# JPA / Hibernate
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=false
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
 
-jwt.secret=YOUR_SECURE_SECRET_KEY
-
+# JWT Security
+jwt.secret=CHANGE_THIS_SECRET_FOR_PRODUCTION
 ```
 
-### 3. First Run – Super Admin Auto-Creation
+---
 
-- During first startup, the system seeds a default Admin user:
+## 4️⃣ Run the Application
 
-- Email: admin@parkease.com
-- Password: admin123
+### Backend
 
-This login ensures immediate access to admin operations.
+Run:
+
+```
+ParkEaseApplication.java
+```
+
+On first startup, **AdminSeeder** automatically populates the database.
+
+### Frontend
+
+Open:
+
+```
+frontend/auth.html
+```
+
+using **Live Server** (VS Code) or any static server.
+
+---
+
+# 🌱 Default Seeded Users (Auto-Created)
+
+> All users share the same password for testing.
+
+**Common Password:** `1234`
+
+## 👤 Admin Accounts
+
+| Role  | Email                                       | Password |
+| ----- | ------------------------------------------- | -------- |
+| ADMIN | [admin1@gmail.com](mailto:admin1@gmail.com) | 1234     |
+| ADMIN | [admin2@gmail.com](mailto:admin2@gmail.com) | 1234     |
+| ADMIN | [admin3@gmail.com](mailto:admin3@gmail.com) | 1234     |
+
+---
+
+## 🏢 Area Owner Accounts
+
+| Role       | Email                                       | Password |
+| ---------- | ------------------------------------------- | -------- |
+| AREA_OWNER | [owner1@gmail.com](mailto:owner1@gmail.com) | 1234     |
+| AREA_OWNER | [owner2@gmail.com](mailto:owner2@gmail.com) | 1234     |
+| AREA_OWNER | [owner3@gmail.com](mailto:owner3@gmail.com) | 1234     |
+
+Each Area Owner controls **2 parking areas**.
+
+---
+
+## 🚗 Driver Accounts
+
+| Role   | Email                                     | Password | Wallet |
+| ------ | ----------------------------------------- | -------- | ------ |
+| DRIVER | [user1@gmail.com](mailto:user1@gmail.com) | 1234     | ₹2000  |
+| DRIVER | [user2@gmail.com](mailto:user2@gmail.com) | 1234     | ₹2000  |
+| DRIVER | [user3@gmail.com](mailto:user3@gmail.com) | 1234     | ₹2000  |
+
+Each driver has **2 vehicles**, one marked as **Primary**.
+
+---
+
+## 🛡️ Guard Accounts
+
+Guards are auto-created **per parking area**.
+
+**Email Pattern**
+
+```
+guard{AreaId}_{Number}@gmail.com
+```
+
+Example:
+
+```
+guard1_1@gmail.com
+guard1_2@gmail.com
+```
+
+**Password:** `1234`
+
+---
+
+# 🧠 Application Architecture
+
+## 🔐 Security (JWT + RBAC)
+
+- Stateless authentication
+- JWT returned on login
+- Token sent in header:
+
+```
+X-Auth-Token: <JWT>
+```
+
+### Role Capabilities
+
+| Role       | Capabilities                    |
+| ---------- | ------------------------------- |
+| ADMIN      | Create Area Owners              |
+| AREA_OWNER | Manage areas, slots, guards     |
+| GUARD      | Verify entry, force-end parking |
+| DRIVER     | Book, park, pay                 |
+
+---
+
+## ⏱️ FAST MODE (IMPORTANT)
+
+### ⚡ Time Acceleration Logic
+
+```
+1 Real Second = 1 Virtual Minute
+```
+
+### Why FAST MODE?
+
+To **demonstrate real parking behavior quickly** during testing and evaluation.
+
+| Feature         | Real World | Park Ease  |
+| --------------- | ---------- | ---------- |
+| Grace Period    | 10 minutes | 10 seconds |
+| Parking Time    | 60 minutes | 60 seconds |
+| No-show Timeout | 30 minutes | 30 seconds |
+
+Implemented in **BookingService** using `Duration.toSeconds()`.
+
+---
+
+# 🚘 Booking Lifecycle (State Machine)
+
+## 1️⃣ Reservation (Remote Booking)
+
+- Status: `RESERVED`
+- Slot marked as `RESERVED`
+- Grace Period: **10 virtual minutes**
+- Auto-cancel after **30 virtual minutes** (Scheduler)
+
+---
+
+## 2️⃣ Arrival (QR Scan)
+
+- Status → `ACTIVE_PARKING`
+- Parking timer starts
+- Reservation fee waived if arrival ≤ grace time
+
+---
+
+## 3️⃣ Exit & Payment
+
+- User clicks **Stop & Pay**
+- Bill calculation:
+
+```
+Reservation Fee + Parking Fee + Pending Dues
+```
+
+- Wallet deducted
+- Slot released
+- Status → `COMPLETED`
+- Exit token generated
+
+---
+
+# 💳 Wallet & Due System (FASTag Model)
+
+- Drivers maintain a **prepaid wallet**
+- Automatic deduction on exit
+- If payment fails:
+
+  - Booking marked unpaid
+  - Amount added to **Outstanding Due**
+  - User blocked from new bookings until dues are cleared
+
+---
+
+# 🚙 Vehicle & Slot Logic
+
+- Vehicles supported: **SMALL, MEDIUM, LARGE**
+- Slot compatibility enforced:
+
+  - SUV ❌ Small Slot
+  - Bike ✔ Large Slot
+
+- One vehicle marked as **Primary** for faster booking
+
+---
+
+# 🧩 Real-Time Communication (WebSocket)
+
+- Slot updates broadcast to:
+
+```
+/topic/area/{areaId}/slots
+```
+
+- User booking updates sent to:
+
+```
+/user/queue/booking-updates
+```
+
+DTOs are used to prevent infinite serialization recursion.
+
+---
+
+# 🧪 Technology Stack
+
+| Layer    | Technology              |
+| -------- | ----------------------- |
+| Backend  | Spring Boot 3.5.8       |
+| Language | Java 21                 |
+| ORM      | Hibernate / JPA         |
+| Database | MySQL 8                 |
+| Security | Spring Security 6 + JWT |
+| Realtime | WebSocket (STOMP)       |
+| API Docs | SpringDoc OpenAPI       |
+| Frontend | HTML, Tailwind CSS, JS  |
+
+---
+
+# ✅ Conclusion
+
+Park Ease demonstrates **real-world backend engineering practices**, including:
+
+- Secure authentication
+- Scalable layered architecture
+- Transaction safety
+- Real-time communication
+- Business rule enforcement
+
+

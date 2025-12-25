@@ -39,10 +39,11 @@ public class BookingScheduler {
     // @Scheduled(fixedRate = 60000)
 
     // FAST MODE (every 1 second):
-    // @Scheduled(fixedRate = 1000)
-    @Scheduled(fixedRate = 100000000)
+    @Scheduled(fixedRate = 1000)
+    // @Scheduled(fixedRate = 1000000)
     @Transactional
     public void checkExpiredReservations() {
+        
 
         LocalDateTime now = LocalDateTime.now();
 
@@ -73,6 +74,8 @@ public class BookingScheduler {
             double penalty = hours * booking.getHourlyReservationRateSnapshot();
 
             booking.setAmountPending(penalty);
+            booking.setFinalParkingFee(0.0);
+            booking.setFinalReservationFee(penalty);
             booking.setStatus(BookingStatus.CANCELLED_NO_SHOW);
 
             // ======================================================
@@ -86,10 +89,13 @@ public class BookingScheduler {
             // ======================================================
             User user = booking.getUser();
 
-            if (user.getWalletBalance() >= penalty) {
+            if (user.getWalletBalance()!=null&&user.getWalletBalance() >= penalty) {
 
                 user.setWalletBalance(user.getWalletBalance() - penalty);
                 booking.setAmountPaid(penalty);
+                booking.setAmountPending(0.0);
+
+
 
             } else {
 

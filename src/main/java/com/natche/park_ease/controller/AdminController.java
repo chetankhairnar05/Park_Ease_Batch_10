@@ -98,7 +98,9 @@ public class AdminController {
                     .email(searchEmail) // Might be null
                     .phone(searchPhone) // Might be null
                     .password(passwordEncoder.encode(request.getPassword()))
-                    .role(request.getRole())
+                    .role(request.getRole()).latitude("22.73860505802358")
+                .longitude("75.88164655202729")
+                .walletBalance(0.0)
                     .isBlocked(false)
                     .isEnabled(true)
                     .build();

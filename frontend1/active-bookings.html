@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Park Ease - Activities</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .card-enter {
+        animation: slideIn 0.3s ease-out;
+      }
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 min-h-screen flex justify-center">
+    <!-- Mobile Container -->
+    <div
+      class="w-full max-w-md bg-white min-h-screen shadow-2xl relative flex flex-col pb-20"
+    >
+      <!-- Header -->
+      <header
+        class="bg-white p-4 shadow-sm z-20 flex justify-between items-center sticky top-0 border-b border-gray-100"
+      >
+        <h1 class="text-lg font-bold text-gray-800">My Activities</h1>
+        <a
+          href="dashboard.html"
+          class="text-xs text-gray-500 font-medium hover:text-indigo-600"
+          >Back</a
+        >
+      </header>
+
+      <!-- Main Content -->
+      <div class="flex-1 bg-gray-50 p-4 overflow-y-auto">
+        <!-- Note -->
+        <div
+          class="px-4 py-2 rounded-full text-xs font-medium backdrop-blur-sm bg-gray-300 mx-3"
+        >
+          <span
+            >Important Note: Fast-Forward Mode: 1 second in real life = 1 minute
+            in the app. (Speeds up testing for long bookings).</span
+          >
+        </div>
+        <!-- Loader -->
+        <div id="loader" class="text-center py-10 text-gray-400 text-sm">
+          Loading sessions...
+        </div>
+
+        <!-- Booking Cards Container -->
+        <div id="booking-container" class="space-y-4 hidden">
+          <!-- Cards Injected Here -->
+        </div>
+
+        <!-- No Data State -->
+        <div id="no-data" class="hidden text-center py-12 mt-4">
+          <div class="text-4xl mb-3 opacity-50">😴</div>
+          <h3 class="text-sm font-bold text-gray-800">No Active Sessions</h3>
+          <p class="text-xs text-gray-400 mb-4 mt-1">
+            You are not parked or reserved anywhere.
+          </p>
+          <a
+            href="slots.html"
+            class="inline-block bg-indigo-600 text-white px-6 py-2 rounded-full text-xs font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition"
+            >Find Parking</a
+          >
+        </div>
+      </div>
+
+      <!-- Bottom Navigation -->
+      <div
+        class="fixed bottom-0 w-full max-w-md bg-white border-t border-gray-100 p-2 flex justify-around items-center text-xs font-medium text-gray-400 z-50"
+      >
+        <a
+          href="dashboard.html"
+          class="flex flex-col items-center p-2 hover:text-indigo-600 transition"
+        >
+          <svg
+            class="w-6 h-6 mb-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+            />
+          </svg>
+          Home
+        </a>
+        <a
+          href="slots.html"
+          class="flex flex-col items-center p-2 hover:text-indigo-600 transition"
+        >
+          <svg
+            class="w-6 h-6 mb-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          Find
+        </a>
+        <a
+          href="active-bookings.html"
+          class="flex flex-col items-center p-2 text-indigo-600"
+        >
+          <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          Activity
+        </a>
+        <a
+          href="profile.html"
+          class="flex flex-col items-center p-2 hover:text-indigo-600 transition"
+        >
+          <svg
+            class="w-6 h-6 mb-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            />
+          </svg>
+          Profile
+        </a>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:8080/api";
+      const token = localStorage.getItem("parkease_token");
+      if (!token) window.location.href = "auth.html";
+      const timers = {};
+
+      async function init() {
+        try {
+          const bookings = await fetchAPI("/bookings/list/active");
+          renderBookings(bookings);
+        } catch (e) {
+          document.getElementById("loader").innerText = "Error: " + e.message;
+          document.getElementById("loader").className =
+            "text-center py-10 text-red-500 text-xs";
+        }
+      }
+
+      async function fetchAPI(endpoint, method = "GET", body = null) {
+        const headers = {
+          "Content-Type": "application/json",
+          "X-Auth-Token": token,
+        };
+        const opts = { method, headers };
+        if (body) opts.body = JSON.stringify(body);
+
+        const res = await fetch(`${API_BASE}${endpoint}`, opts);
+        const text = await res.text();
+
+        if (!res.ok) {
+          try {
+            const json = JSON.parse(text);
+            throw new Error(json.error || json.message || text);
+          } catch {
+            throw new Error(text);
+          }
+        }
+        try {
+          return JSON.parse(text);
+        } catch {
+          return text;
+        }
+      }
+
+      function renderBookings(list) {
+        document.getElementById("loader").classList.add("hidden");
+        const container = document.getElementById("booking-container");
+        const noData = document.getElementById("no-data");
+
+        container.innerHTML = "";
+
+        if (!Array.isArray(list) || list.length === 0) {
+          noData.classList.remove("hidden");
+          return;
+        }
+
+        container.classList.remove("hidden");
+
+        list.forEach((b) => {
+          const isReserved = b.status === "RESERVED";
+          const statusColor = isReserved
+            ? "bg-amber-100 text-amber-800 border-amber-200"
+            : "bg-emerald-100 text-emerald-800 border-emerald-200";
+          const startTime = isReserved ? b.reservationTime : b.arrivalTime;
+          const start = new Date(startTime).getTime();
+          const now = new Date().getTime();
+          let elapsedSeconds = Math.floor((now - start) / 1000);
+
+          const card = document.createElement("div");
+          card.className =
+            "bg-white rounded-2xl shadow-sm border border-gray-100 p-5 card-enter relative overflow-hidden";
+          card.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="font-bold text-sm text-gray-900 truncate w-48">${
+                              b.areaName || "Unknown Area"
+                            }</h3>
+                            <div class="text-[10px] text-gray-500 font-mono mt-0.5">Slot: ${
+                              b.slotNumber
+                            }</div>
+                        </div>
+                        <span class="px-2 py-1 rounded-md text-[10px] font-bold uppercase border ${statusColor}">
+                            ${b.status.replace("_", " ")}
+                        </span>
+                    </div>
+
+                    <div class="flex items-center space-x-3 mb-5 bg-gray-50 p-3 rounded-xl border border-gray-50">
+                        <div class="bg-white p-2 rounded-lg shadow-sm text-lg">🚗</div>
+                        <div>
+                            <div class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Vehicle</div>
+                            <div class="font-mono text-xs text-gray-800 font-medium">${
+                              b.vehicleNumber
+                            }</div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mb-5">
+                        <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">
+                            ${isReserved ? "Time Reserved" : "Parking Duration"}
+                        </div>
+                        <div id="timer-${
+                          b.id
+                        }" class="text-2xl font-mono font-bold text-gray-800 tracking-tight">00:00</div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        ${
+                          isReserved
+                            ? `<button onclick="handleArrive(${b.id})" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-xs font-bold shadow-md shadow-emerald-100 transition transform active:scale-95 flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                Scan Arrival
+                            </button>`
+                            : `<button onclick="handleExit(${b.id})" class="w-full bg-rose-600 hover:bg-rose-700 text-white py-2.5 rounded-xl text-xs font-bold shadow-md shadow-rose-100 transition transform active:scale-95 flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a1 1 0 11-2 0 1 1 0 012 0z"/></svg>
+                                Stop & Pay
+                            </button>`
+                        }
+                    </div>
+                `;
+
+          container.appendChild(card);
+          startCardTimer(b.id, elapsedSeconds);
+        });
+      }
+
+      function startCardTimer(id, initialSeconds) {
+        let sec = initialSeconds > 0 ? initialSeconds : 0;
+        const updateDisplay = () => {
+          const hours = Math.floor(sec / 3600);
+          const mins = Math.floor((sec % 3600) / 60);
+          const s = Math.floor(sec % 60);
+
+          const hDisplay = hours > 0 ? `${hours}:` : "";
+          const mDisplay = mins.toString().padStart(2, "0");
+          const sDisplay = s.toString().padStart(2, "0");
+
+          const el = document.getElementById(`timer-${id}`);
+          if (el) el.innerText = `${hDisplay}${mDisplay}:${sDisplay}`;
+        };
+        updateDisplay();
+        timers[id] = setInterval(() => {
+          sec++;
+          updateDisplay();
+        }, 1000);
+      }
+
+      async function handleArrive(id) {
+        if (!confirm("Simulate scanning QR code for arrival?")) return;
+        try {
+          await fetchAPI(`/bookings/${id}/arrive`, "POST");
+          init();
+        } catch (e) {
+          alert("Arrival Failed: " + e.message);
+        }
+      }
+
+      async function handleExit(id) {
+        if (!confirm("End parking session and pay?")) return;
+        try {
+          const receipt = await fetchAPI(`/bookings/${id}/end`, "POST");
+          const cost = receipt.amountPaid || receipt.finalParkingFee;
+          alert(`✅ Payment Successful!\nAmount: ₹${cost.toFixed(2)}`);
+          init();
+        } catch (e) {
+          if (e.message.includes("Insufficient")) {
+            if (confirm("Insufficient Wallet Balance! Top Up now?")) {
+              window.location.href = "profile.html";
+            }
+          } else {
+            alert("Exit Failed: " + e.message);
+          }
+        }
+      }
+
+      init();
+    </script>
+  </body>
+</html>

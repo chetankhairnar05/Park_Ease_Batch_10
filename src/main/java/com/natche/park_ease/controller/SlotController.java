@@ -138,4 +138,23 @@ public class SlotController {
 
         return ResponseEntity.ok(responseList);
     }
-}
+
+    @GetMapping("/{slotId}/details")
+    public ResponseEntity<?> getSlotDetails(@PathVariable Long slotId) {
+        ParkingSlot slot = slotRepository.findById(slotId)
+                .orElseThrow(() -> new RuntimeException("Slot not found"));
+        
+        // FIXED: Added safe null checks for EVERY field
+        // Map.of CRASHES if any value is null. We must provide defaults.
+        return ResponseEntity.ok(Map.of(
+            "slotId", slot.getSlotId(),
+            "slotNumber", slot.getSlotNumber() != null ? slot.getSlotNumber() : "Unknown",
+            "type", slot.getSupportedVehicleType(),
+            "baseRate", slot.getBaseHourlyRate() != null ? slot.getBaseHourlyRate() : 0.0,
+            "floor", slot.getFloor(),
+            "areaId", slot.getParkingArea().getAreaId(),
+            "areaName", slot.getParkingArea().getName() != null ? slot.getParkingArea().getName() : "Unknown Area",
+            "address", slot.getParkingArea().getAddress() != null ? slot.getParkingArea().getAddress() : "Address not available",
+            "reservationRate", slot.getBaseHourlyRate() != null ? slot.getBaseHourlyRate() : 0.0
+        ));
+    }}

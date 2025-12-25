@@ -39,7 +39,7 @@ frontend
 
 .vscode/
 
-src/main/resources/application.properties
+src/main/resources/application.propertiesCopy
 
 generate_repos.sh
 mvnw
@@ -51,3 +51,10 @@ mvnw.cmd
 test-frontend/
 
 a1.txt
+
+frontend2
+frontend1/active-bookings1.html
+frontend1/booking1.html
+frontend1/booking11.html
+frontend1/dashboard5.html
+frontend1/owner-dashboard5.html

@@ -77,6 +77,9 @@ public class AuthController {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(UserRole.DRIVER) // Default role
                 .isEnabled(true).isBlocked(false)
+                .latitude("22.73860505802358")
+                .longitude("75.88164655202729")
+                .walletBalance(0.0)
                 .build();
 
         userRepository.save(user);

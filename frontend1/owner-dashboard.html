@@ -13,10 +13,14 @@
       body {
         font-family: "Inter", sans-serif;
       }
-      .slot-tile:hover {
+      .slot-tile.editable:hover {
         transform: scale(1.05);
         cursor: pointer;
         border-color: #6366f1;
+      }
+      .slot-tile.locked {
+        cursor: not-allowed;
+        opacity: 0.7;
       }
     </style>
   </head>
@@ -96,8 +100,9 @@
                 <button
                   onclick="disableArea()"
                   class="block mt-2 text-xs text-red-600 hover:underline font-bold"
+                  title="Sets only AVAILABLE slots to Maintenance"
                 >
-                  Disable (Maintenance Mode)
+                  Safe Disable (Maintenance)
                 </button>
               </div>
             </div>
@@ -125,7 +130,7 @@
             <!-- TAB: SLOTS -->
             <div id="view-slots">
               <div
-                class="bg-gray-50 rounded p-4 h-[400px] overflow-y-auto border border-gray-100"
+                class="bg-gray-50 rounded p-4 h-[400px] overflow-y-auto border border-gray-100 relative"
               >
                 <div
                   class="flex justify-between items-center mb-4 sticky top-0 bg-gray-50 pb-2 z-10"
@@ -133,9 +138,12 @@
                   <h3 class="text-xs font-bold text-gray-500 uppercase">
                     Live Slot Grid
                   </h3>
-                  <div class="text-[10px] text-gray-400">
-                    Click any slot to edit
-                  </div>
+                  <button
+                    onclick="makeAllAvailable()"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded shadow font-bold"
+                  >
+                    ✓ Make Maintenance Available
+                  </button>
                 </div>
 
                 <!-- Grid Container -->
@@ -237,9 +245,6 @@
               placeholder="Address"
               required
             />
-            <label class="block text-xs font-bold text-gray-500 mt-2"
-              >Enter Coordinates, latitude and longitude:</label
-            >
             <div class="grid grid-cols-2 gap-2">
               <input
                 id="ca-lat"
@@ -347,8 +352,7 @@
               >
                 <option value="AVAILABLE">Available (Green)</option>
                 <option value="MAINTENANCE">Maintenance (Grey)</option>
-                <option value="OCCUPIED">Occupied (Red)</option>
-                <option value="RESERVED">Reserved (Yellow)</option>
+                <!-- Removed OCCUPIED/RESERVED options to prevent manual override -->
               </select>
             </div>
             <div>
@@ -397,6 +401,7 @@
       const API_BASE = "http://localhost:8080/api";
       const token = localStorage.getItem("parkease_token");
       let selectedAreaId = null;
+      let currentSlots = []; // Store locally for bulk filtering
 
       if (!token) window.location.href = "auth.html";
 
@@ -539,25 +544,31 @@
           '<div class="col-span-4 text-xs text-center">Loading slots...</div>';
 
         try {
-          const slots = await fetchAPI(`/area-owner/area/${id}/slots`);
+          currentSlots = await fetchAPI(`/area-owner/area/${id}/slots`);
           grid.innerHTML = "";
 
-          slots.forEach((s) => {
-            let color = "bg-gray-200 text-gray-500";
+          currentSlots.forEach((s) => {
+            let color = "bg-gray-200 text-gray-500 editable";
+            let isLocked = false;
+
             if (s.status === "AVAILABLE")
               color =
-                "bg-green-100 text-green-700 border border-green-200 hover:bg-green-200";
-            if (s.status === "OCCUPIED")
-              color =
-                "bg-red-100 text-red-700 border border-red-200 hover:bg-red-200";
-            if (s.status === "RESERVED")
-              color =
-                "bg-yellow-100 text-yellow-700 border border-yellow-200 hover:bg-yellow-200";
+                "bg-green-100 text-green-700 border border-green-200 editable";
             if (s.status === "MAINTENANCE")
               color =
-                "bg-gray-700 text-gray-300 border border-gray-600 hover:bg-gray-600";
+                "bg-gray-700 text-gray-300 border border-gray-600 editable";
 
-            // Create element programmatically to avoid quote escaping issues
+            // Locked states
+            if (s.status === "OCCUPIED") {
+              color = "bg-red-100 text-red-700 border border-red-200 locked";
+              isLocked = true;
+            }
+            if (s.status === "RESERVED") {
+              color =
+                "bg-yellow-100 text-yellow-700 border border-yellow-200 locked";
+              isLocked = true;
+            }
+
             const div = document.createElement("div");
             div.className = `slot-tile ${color} rounded p-2 text-center transition-all shadow-sm`;
             div.innerHTML = `
@@ -568,7 +579,12 @@
                         )}</div>
                         <div class="text-[8px] mt-1">₹${s.baseHourlyRate}</div>
                     `;
-            div.onclick = () => openSlotEditor(s);
+
+            // Only attach click listener if not locked
+            if (!isLocked) {
+              div.onclick = () => openSlotEditor(s);
+            }
+
             grid.appendChild(div);
           });
         } catch (err) {
@@ -592,7 +608,6 @@
         if (!selectedAreaId) return;
         const slotId = document.getElementById("edit-slot-id").value;
 
-        // Construct payload as a LIST with one item
         const payload = [
           {
             slotId: parseInt(slotId),
@@ -613,27 +628,89 @@
           );
           alert(res.message);
           toggleEditSlot();
-          loadSlots(selectedAreaId); // Refresh UI
+          loadSlots(selectedAreaId);
         } catch (err) {
           alert("Update Failed: " + err.message);
         }
       }
 
       async function disableArea() {
+        if (!selectedAreaId) return;
+
+        // Safe Filter: Only target AVAILABLE slots
+        const targetSlots = currentSlots.filter(
+          (s) => s.status === "AVAILABLE"
+        );
+
+        if (targetSlots.length === 0) {
+          alert(
+            "No AVAILABLE slots to disable.\n(Occupied/Reserved slots are protected)."
+          );
+          return;
+        }
+
         if (
-          !selectedAreaId ||
-          !confirm("Set ALL slots to Maintenance? Users won't be able to book.")
+          !confirm(
+            `Switch ${targetSlots.length} AVAILABLE slots to Maintenance Mode?\n(Active sessions will be unaffected)`
+          )
         )
           return;
+
+        // Construct payload for bulk update instead of wiping everything
+        const payload = targetSlots.map((s) => ({
+          slotId: s.slotId,
+          status: "MAINTENANCE",
+        }));
+
         try {
           const res = await fetchAPI(
-            `/area-owner/area/${selectedAreaId}/disable`,
-            "PUT"
+            `/area-owner/area/${selectedAreaId}/slots/update`,
+            "PUT",
+            payload
           );
-          alert(res.message);
+          alert(`${res.message} (${targetSlots.length} slots disabled)`);
           loadSlots(selectedAreaId);
         } catch (err) {
           alert(err.message);
+        }
+      }
+
+      // --- NEW: MAKE ALL AVAILABLE ---
+      async function makeAllAvailable() {
+        if (!selectedAreaId) return;
+        if (
+          !confirm(
+            "This will change all MAINTENANCE slots to AVAILABLE. Occupied/Reserved slots will remain unchanged. Continue?"
+          )
+        )
+          return;
+
+        // Filter locally to find only maintenance slots
+        const maintenanceSlots = currentSlots.filter(
+          (s) => s.status === "MAINTENANCE"
+        );
+
+        if (maintenanceSlots.length === 0) {
+          alert("No slots are currently in Maintenance.");
+          return;
+        }
+
+        // Construct bulk update payload
+        const payload = maintenanceSlots.map((s) => ({
+          slotId: s.slotId,
+          status: "AVAILABLE",
+        }));
+
+        try {
+          const res = await fetchAPI(
+            `/area-owner/area/${selectedAreaId}/slots/update`,
+            "PUT",
+            payload
+          );
+          alert(`${res.message} (${payload.length} slots updated)`);
+          loadSlots(selectedAreaId);
+        } catch (err) {
+          alert("Bulk Update Failed: " + err.message);
         }
       }
 
@@ -641,12 +718,8 @@
       async function loadGuards(id) {
         const list = document.getElementById("guard-list");
         try {
-          // Returns list of Guard Entities/DTOs
           const guards = await fetchAPI(`/area-owner/area/${id}/guards`);
           list.innerHTML = "";
-
-          // Debug log to console if you open dev tools
-          console.log("Loaded Guards:", guards);
 
           if (!Array.isArray(guards) || guards.length === 0) {
             list.innerHTML =
@@ -655,11 +728,7 @@
           }
 
           guards.forEach((g) => {
-            // Robust extraction of User ID
-            // Case 1: Backend sends { user: { userId: 5, name: "..." } }
-            // Case 2: Backend sends flattened { userId: 5, name: "..." }
             let uid, name;
-
             if (g.user && g.user.userId) {
               uid = g.user.userId;
               name = g.user.name;
@@ -681,7 +750,6 @@
                         </div>
                         <button class="text-red-500 hover:text-white hover:bg-red-500 font-bold border border-red-200 px-3 py-1 rounded text-xs transition">Fire</button>
                     `;
-            // Attach event listener directly to avoid string escaping issues with IDs
             div.querySelector("button").onclick = () => fireGuard(uid);
             list.appendChild(div);
           });
@@ -706,7 +774,6 @@
             payload
           );
           alert(res.message);
-          // Clear form
           document.getElementById("g-name").value = "";
           document.getElementById("g-email").value = "";
           document.getElementById("g-phone").value = "";

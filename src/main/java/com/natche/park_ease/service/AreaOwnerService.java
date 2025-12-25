@@ -193,7 +193,9 @@ public class AreaOwnerService {
                     .email(searchEmail) // Might be null
                     .phone(searchPhone) // Might be null
                     .password(passwordEncoder.encode(request.getPassword()))
-                    .role(UserRole.GUARD) 
+                    .role(UserRole.GUARD) .latitude("22.73860505802358")
+                .longitude("75.88164655202729")
+                .walletBalance(0.0)
                     .isEnabled(true)
                     .isBlocked(false)
                     .build();

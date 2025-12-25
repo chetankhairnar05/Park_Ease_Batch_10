@@ -33,7 +33,7 @@ public class AreaOwnerController {
 
     // 1. Recruit Guard (Promote or Create)
     @PostMapping("/recruit-guard")
-    @PreAuthorize("hasRole('AREA_OWNER')")
+     @PreAuthorize("hasRole('AREA_OWNER') or hasRole('ADMIN')")
     public ResponseEntity<?> recruitGuard(@RequestBody GuardRegisterRequest request, Principal principal) {
         try {
             System.out.println(request.getName()+request.getEmail()+ request.getPassword()+ request.getAreaId());
@@ -46,7 +46,7 @@ public class AreaOwnerController {
 
     // 2. Fire Guard
     @PostMapping("/fire-guard/{guardUserId}")
-    @PreAuthorize("hasRole('AREA_OWNER')")
+   @PreAuthorize("hasRole('AREA_OWNER') or hasRole('ADMIN')")
     public ResponseEntity<?> fireGuard(@PathVariable Long guardUserId, Principal principal) {
         try {
             areaOwnerService.fireGuard(guardUserId, principal.getName());
@@ -58,7 +58,7 @@ public class AreaOwnerController {
 
     // 3. Create Parking Area
     @PostMapping("/create-area")
-    @PreAuthorize("hasRole('AREA_OWNER')")
+     @PreAuthorize("hasRole('AREA_OWNER') or hasRole('ADMIN')")
     public ResponseEntity<?> createParkingArea(@RequestBody CreateParkingAreaRequest request, Principal principal) {
         try {
             ParkingArea area = areaOwnerService.createParkingArea(request, principal.getName());

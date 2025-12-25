@@ -1,6 +1,7 @@
 package com.natche.park_ease.service;
 
 import com.natche.park_ease.dto.BookingRequest;
+import com.natche.park_ease.dto.response.BookingDto; // ✅ Import your DTO
 import com.natche.park_ease.entity.*;
 import com.natche.park_ease.enums.*;
 import com.natche.park_ease.repository.*;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -34,7 +36,7 @@ public class BookingService {
         User user = userRepository.findByEmailOrPhone(userEmail, userEmail).orElseThrow();
         if (user.getIsBlocked()) throw new RuntimeException("Account Blocked.");
 
-        if (bookingRepository.findActiveBookingByLicensePlate(request.getVehicleId().toString()).isPresent()) {
+        if (bookingRepository.findActiveBookingByVehicleId(request.getVehicleId()).isPresent()) { 
             throw new RuntimeException("Vehicle already in active booking.");
         }
 
@@ -44,6 +46,7 @@ public class BookingService {
         if (slot.getStatus() != ParkingSlotStatus.AVAILABLE)
             throw new RuntimeException("Slot not available.");
 
+        // Use index 1 (Standard demand) for reservation multiplier
         Double multiplier = area.getReservationRateMultipliers().get(1);
 
         Booking booking = Booking.builder()
@@ -58,14 +61,9 @@ public class BookingService {
                 .hourlyParkingRateSnapshot(slot.getBaseHourlyRate())
                 .build();
 
-        // ORIGINAL LOGIC (minutes):
-        // if (request.getInitialStatus() == BookingStatus.RESERVED) {
-        //     booking.setExpectedEndTime(LocalDateTime.now().plusMinutes(area.getGracePeriodMinutes()));
-        //     slot.setStatus(ParkingSlotStatus.RESERVED);
-        // }
-
-        // FAST MODE (seconds):
+        // --- FAST MODE LOGIC (1 Real Second = 1 Virtual Minute) ---
         if (request.getInitialStatus() == BookingStatus.RESERVED) {
+            // Expires in X seconds (representing X minutes)
             booking.setExpectedEndTime(LocalDateTime.now().plusSeconds(area.getGracePeriodMinutes()));
             slot.setStatus(ParkingSlotStatus.RESERVED);
         } else {
@@ -77,8 +75,11 @@ public class BookingService {
         bookingRepository.save(booking);
         slotRepository.save(slot);
 
-        messagingTemplate.convertAndSend("/topic/area/" + area.getAreaId() + "/slots",
-                "Slot " + slot.getSlotNumber() + " updated");
+        // 1. Notify Public Map (Red/Yellow tile)
+        broadcastSlotUpdate(slot, area.getAreaId());
+        
+        // 2. Notify User Dashboard (Safe DTO)
+        sendBookingUpdate(booking);
 
         return booking;
     }
@@ -95,11 +96,7 @@ public class BookingService {
 
         booking.setArrivalTime(LocalDateTime.now());
 
-        // ORIGINAL (minutes):
-        // long minutesReserved = Duration.between(booking.getReservationTime(), booking.getArrivalTime()).toMinutes();
-        // if (minutesReserved <= booking.getArea().getReservationWaiverMinutes()) { ... }
-
-        // FAST MODE (seconds):
+        // FAST MODE: Duration in Seconds = Virtual Minutes
         long minutesReserved = Duration.between(
                 booking.getReservationTime(),
                 booking.getArrivalTime()
@@ -115,7 +112,12 @@ public class BookingService {
         booking.setStatus(BookingStatus.ACTIVE_PARKING);
         booking.getSlot().setStatus(ParkingSlotStatus.OCCUPIED);
 
-        return bookingRepository.save(booking);
+        bookingRepository.save(booking);
+        
+        broadcastSlotUpdate(booking.getSlot(), booking.getArea().getAreaId());
+        sendBookingUpdate(booking);
+
+        return booking;
     }
 
     // ======================================================
@@ -130,10 +132,7 @@ public class BookingService {
 
         booking.setDepartureTime(LocalDateTime.now());
 
-        // ORIGINAL:
-        // long minutesParked = Duration.between(booking.getArrivalTime(), booking.getDepartureTime()).toMinutes();
-
-        // FAST MODE:
+        // FAST MODE: Duration in Seconds = Virtual Minutes
         long minutesParked = Duration.between(
                 booking.getArrivalTime(),
                 booking.getDepartureTime()
@@ -142,9 +141,8 @@ public class BookingService {
         Double hours = Math.max(1.0, minutesParked / 60.0);
         booking.setFinalParkingFee(hours * booking.getHourlyParkingRateSnapshot());
 
-        Double totalBill =
-                (booking.getFinalReservationFee() != null ? booking.getFinalReservationFee() : 0.0)
-                        + booking.getFinalParkingFee();
+        Double totalBill = (booking.getFinalReservationFee() != null ? booking.getFinalReservationFee() : 0.0)
+                         + booking.getFinalParkingFee();
 
         Double dues = dueRepository.getTotalPendingDuesByUserId(booking.getUser().getUserId());
         if (dues == null) dues = 0.0;
@@ -161,7 +159,6 @@ public class BookingService {
                 .build();
 
         if (user.getWalletBalance() >= grandTotal) {
-
             user.setWalletBalance(user.getWalletBalance() - grandTotal);
             payment.setMethod(PaymentMethod.WALLET);
             payment.setStatus(PaymentStatus.SUCCESS);
@@ -170,14 +167,46 @@ public class BookingService {
             booking.setAmountPaid(grandTotal);
             booking.setExitToken(UUID.randomUUID().toString());
             booking.getSlot().setStatus(ParkingSlotStatus.AVAILABLE);
-
         } else {
             throw new RuntimeException("Insufficient Wallet Balance. Need: " + grandTotal);
         }
 
         userRepository.save(user);
         paymentRepository.save(payment);
+        bookingRepository.save(booking);
+        slotRepository.save(booking.getSlot());
 
-        return bookingRepository.save(booking);
+        broadcastSlotUpdate(booking.getSlot(), booking.getArea().getAreaId());
+        sendBookingUpdate(booking);
+
+        return booking;
+    }
+
+    // ======================================================
+    // HELPERS (NOTIFICATIONS)
+    // ======================================================
+
+    private void broadcastSlotUpdate(ParkingSlot slot, Long areaId) {
+        Map<String, Object> updateMsg = Map.of(
+            "slotId", slot.getSlotId(),
+            "slotNumber", slot.getSlotNumber(),
+            "status", slot.getStatus(),
+            "areaId", areaId
+        );
+        messagingTemplate.convertAndSend("/topic/area/" + areaId + "/slots", updateMsg);
+    }
+
+    // ✅ FIX: Send DTO instead of Entity to prevent ByteBuddy Recursion Error
+    private void sendBookingUpdate(Booking booking) {
+        try {
+            BookingDto dto = BookingDto.fromEntity(booking);
+            messagingTemplate.convertAndSendToUser(
+                booking.getUser().getEmail(), // Assuming Email is username
+                "/queue/booking-updates", 
+                dto
+            );
+        } catch (Exception e) {
+            System.err.println("Failed to send WebSocket update: " + e.getMessage());
+        }
     }
 }
