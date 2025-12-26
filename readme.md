@@ -3,7 +3,7 @@
 **project demo link**
 
 ```
-https://youtu.be/lCHiSUXgMZo
+
 ```
 
 **Spring Boot Internship Project**
