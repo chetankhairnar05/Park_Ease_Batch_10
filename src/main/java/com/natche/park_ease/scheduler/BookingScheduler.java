@@ -38,8 +38,8 @@ public class BookingScheduler {
     // ORIGINAL (every 1 minute):
     // @Scheduled(fixedRate = 60000)
 
-    // FAST MODE (every 1 second):
-    @Scheduled(fixedRate = 1000)
+    // FAST MODE (every 10 second):
+    @Scheduled(fixedRate = 10000)
     // @Scheduled(fixedRate = 1000000)
     @Transactional
     public void checkExpiredReservations() {
