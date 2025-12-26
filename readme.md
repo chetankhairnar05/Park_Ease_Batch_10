@@ -1,5 +1,11 @@
 # 🅿️ Park Ease – Smart Parking Management System
 
+**project demo link**
+
+```
+https://youtu.be/lCHiSUXgMZo
+```
+
 **Spring Boot Internship Project**
 
 Park Ease is a **production-grade Smart Parking Management System** built using **Spring Boot 3**, designed to simulate real-world urban parking operations.
