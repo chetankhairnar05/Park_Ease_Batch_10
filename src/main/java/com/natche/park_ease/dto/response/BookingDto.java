@@ -20,13 +20,19 @@ public class BookingDto {
     private BookingStatus status;
     private LocalDateTime reservationTime;
     private LocalDateTime arrivalTime;
+    private LocalDateTime expectedArrivalTime;
     private LocalDateTime departureTime;
     
     private Double amountPaid;
     private Double finalParkingFee;
 
+        // ✅ NEW FIELDS REQUIRED FOR HISTORY
+    private Double amountPending;
+    private Double finalReservationFee;
+
     public static BookingDto fromEntity(Booking booking) {
         BookingDto dto = new BookingDto();
+
         dto.setId(booking.getId());
         dto.setStatus(booking.getStatus());
         dto.setReservationTime(booking.getReservationTime());
@@ -34,6 +40,11 @@ public class BookingDto {
         dto.setDepartureTime(booking.getDepartureTime());
         dto.setAmountPaid(booking.getAmountPaid());
         dto.setFinalParkingFee(booking.getFinalParkingFee());
+        dto.setExpectedArrivalTime(booking.getExpectedEndTime());
+        dto.setAmountPending(booking.getAmountPending());
+        dto.setFinalReservationFee(booking.getFinalReservationFee());
+
+
 
         // Map IDs safely
         if (booking.getVehicle() != null) {

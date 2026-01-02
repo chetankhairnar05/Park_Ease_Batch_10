@@ -129,5 +129,15 @@ public class AreaOwnerController {
         return ResponseEntity.ok(slotRepository.findByParkingArea_AreaId(areaId));
     }
     
+
+        @GetMapping("/area/{areaId}/stats")
+    @PreAuthorize("hasRole('AREA_OWNER') or hasRole('ADMIN')")
+    public ResponseEntity<?> getAreaStats(@PathVariable Long areaId, Principal principal) {
+        try {
+            return ResponseEntity.ok(areaOwnerService.getAreaStatistics(areaId, principal.getName()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
     
 }

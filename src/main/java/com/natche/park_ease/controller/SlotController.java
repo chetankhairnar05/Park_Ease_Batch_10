@@ -5,6 +5,7 @@ package com.natche.park_ease.controller;
 
 import com.natche.park_ease.dto.ParkingAreaDistanceProjection;
 import com.natche.park_ease.dto.response.ParkingAreaSummaryResponse;
+import com.natche.park_ease.entity.ParkingArea;
 import com.natche.park_ease.entity.ParkingSlot;
 import com.natche.park_ease.entity.User;
 import com.natche.park_ease.enums.VehicleType;
@@ -143,6 +144,9 @@ public class SlotController {
     public ResponseEntity<?> getSlotDetails(@PathVariable Long slotId) {
         ParkingSlot slot = slotRepository.findById(slotId)
                 .orElseThrow(() -> new RuntimeException("Slot not found"));
+
+        ParkingArea area = slot.getParkingArea();
+        Double multiplier = area.getReservationRateMultipliers().get(1);
         
         // FIXED: Added safe null checks for EVERY field
         // Map.of CRASHES if any value is null. We must provide defaults.
@@ -155,6 +159,6 @@ public class SlotController {
             "areaId", slot.getParkingArea().getAreaId(),
             "areaName", slot.getParkingArea().getName() != null ? slot.getParkingArea().getName() : "Unknown Area",
             "address", slot.getParkingArea().getAddress() != null ? slot.getParkingArea().getAddress() : "Address not available",
-            "reservationRate", slot.getBaseHourlyRate() != null ? slot.getBaseHourlyRate() : 0.0
+            "reservationRate", slot.getBaseHourlyRate() != null ? slot.getBaseHourlyRate() * multiplier : 0.0
         ));
     }}

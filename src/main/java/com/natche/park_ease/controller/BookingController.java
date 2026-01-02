@@ -179,4 +179,23 @@ public class BookingController {
 
         return ResponseEntity.ok(dtos);
     }
+
+    @GetMapping("/list/history")
+    public ResponseEntity<List<BookingDto>> getBookingHistory(Principal principal) {
+        User user = userRepository.findByEmailOrPhone(principal.getName(), principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Booking> history = bookingRepository.findByUser_UserIdAndStatusIn(
+                user.getUserId(),
+                Arrays.asList(BookingStatus.COMPLETED, BookingStatus.CANCELLED_NO_SHOW, BookingStatus.DEFAULTED)
+        );
+
+        List<BookingDto> dtos = history.stream()
+                .map(BookingDto::fromEntity)
+                // Sort by ID descending (newest first)
+                .sorted((a, b) -> b.getId().compareTo(a.getId()))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
+    }
 }

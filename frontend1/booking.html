@@ -108,6 +108,17 @@
             >--</span
           >
         </div>
+        <div
+          class="bg-gray-50 p-3 rounded-lg text-center border border-gray-100"
+        >
+          <span
+            class="block text-[10px] text-gray-400 uppercase tracking-wider font-bold"
+            >Floor</span
+          >
+          <span id="b-slot-floor" class="font-bold text-gray-700 text-sm"
+            >--</span
+          >
+        </div>
       </div>
 
       <!-- Info: Grace Period & Waiver -->
@@ -314,6 +325,7 @@
           slot.slotNumber || "--";
         document.getElementById("b-slot-type").innerText =
           slot.type || "STANDARD";
+        document.getElementById("b-slot-floor").innerText = slot.floor || "0";
         document.getElementById("b-rate-park").innerText = slot.baseRate || 0;
         document.getElementById("b-rate-res").innerText =
           slot.reservationRate || slot.baseRate || 0;

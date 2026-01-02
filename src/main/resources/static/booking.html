@@ -108,6 +108,17 @@
             >--</span
           >
         </div>
+        <div
+          class="bg-gray-50 p-3 rounded-lg text-center border border-gray-100"
+        >
+          <span
+            class="block text-[10px] text-gray-400 uppercase tracking-wider font-bold"
+            >Floor</span
+          >
+          <span id="b-slot-floor" class="font-bold text-gray-700 text-sm"
+            >--</span
+          >
+        </div>
       </div>
 
       <!-- Info: Grace Period & Waiver -->
@@ -314,6 +325,7 @@
           slot.slotNumber || "--";
         document.getElementById("b-slot-type").innerText =
           slot.type || "STANDARD";
+        document.getElementById("b-slot-floor").innerText = slot.floor || "0";
         document.getElementById("b-rate-park").innerText = slot.baseRate || 0;
         document.getElementById("b-rate-res").innerText =
           slot.reservationRate || slot.baseRate || 0;
@@ -378,6 +390,7 @@
           // Start Real-time
           connectWS();
           updateLiveUI(res);
+          window.location.href = "active-bookings.html";
         } catch (e) {
           alert("Booking Failed: " + e.message);
         } finally {
@@ -425,25 +438,28 @@
         const btnArrive = document.getElementById("btn-arrive");
         const btnExit = document.getElementById("btn-exit");
         const msg = document.getElementById("live-msg");
+        const receiptPanel = document.getElementById("receipt-panel");
 
-        statusEl.innerText = booking.status;
+        statusEl.innerText = booking.status.replace(/_/g, " "); // Clean text
 
+        // Stop Timer for final states
         if (
-          booking.status !== "COMPLETED" &&
-          booking.status !== "CANCELLED_NO_SHOW"
+          booking.status === "COMPLETED" ||
+          booking.status === "CANCELLED_NO_SHOW"
         ) {
-          startTimer();
-        } else {
           stopTimer();
+        } else {
+          startTimer();
         }
+
+        // --- UI STATES ---
 
         if (booking.status === "RESERVED") {
           header.className =
             "bg-amber-500 p-8 text-center text-white transition-colors duration-500";
           btnArrive.classList.remove("hidden");
           btnExit.classList.add("hidden");
-          msg.innerHTML =
-            "Spot Reserved.<br>Arrive within 10 mins for free entry.";
+          msg.innerHTML = "Spot Reserved.<br>Arrive within grace period.";
         } else if (booking.status === "ACTIVE_PARKING") {
           header.className =
             "bg-emerald-600 p-8 text-center text-white transition-colors duration-500";
@@ -456,15 +472,34 @@
           statusEl.innerText = "PAID";
           btnExit.classList.add("hidden");
           msg.classList.add("hidden");
-          document.getElementById("receipt-panel").classList.remove("hidden");
+          receiptPanel.classList.remove("hidden");
+          document.getElementById("final-bill").innerText =
+            booking.amountPaid.toFixed(2);
+        }
+        // ✅ NEW: Handle Cancellation / No-Show
+        else if (booking.status === "CANCELLED_NO_SHOW") {
+          header.className =
+            "bg-red-700 p-8 text-center text-white transition-colors duration-500";
+          statusEl.innerText = "CANCELLED";
+          btnArrive.classList.add("hidden");
+          btnExit.classList.add("hidden");
+          msg.innerHTML = "Reservation Expired.<br>Penalty Applied.";
+          msg.className = "text-center text-sm text-red-600 font-bold mt-2";
+
+          receiptPanel.classList.remove("hidden");
+          // Determine amount (Paid or Pending Debt)
+          const amount =
+            booking.amountPaid > 0 ? booking.amountPaid : booking.amountPending;
           document.getElementById("final-bill").innerText = (
-            booking.amountPaid ||
-            booking.finalParkingFee ||
-            0
+            amount || 0
           ).toFixed(2);
+
+          // Change Receipt Title to Penalty
+          receiptPanel.querySelector("h3").innerText = "No-Show Penalty";
+          receiptPanel.querySelector("h3").className = "font-bold text-red-600";
+          // Change checkmark to cross if unpaid debt (optional logic)
         }
       }
-
       function startTimer() {
         if (timerInterval) clearInterval(timerInterval);
         let sec = 0;

@@ -111,6 +111,27 @@
         </div>
       </div>
 
+      <div
+        class="h-96 p-3 m-1 overflow-auto border-2 border-gray-600 rounded-3xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+      >
+        <!-- HISTORY SECTION -->
+        <div class="mt-0 border-t border-gray-200 pt-6">
+          <h2 class="text-lg font-bold text-gray-800 mb-4 px-2">History</h2>
+
+          <div
+            id="history-loader"
+            class="text-center py-4 text-xs text-gray-400"
+          >
+            Loading history...
+          </div>
+
+          <!-- History List Container -->
+          <div id="history-container" class="space-y-3 pb-20">
+            <!-- Items injected via JS -->
+          </div>
+        </div>
+      </div>
+
       <!-- Bottom Navigation -->
       <div
         class="fixed bottom-0 w-full max-w-md bg-white border-t border-gray-100 p-2 flex justify-around items-center text-xs font-medium text-gray-400 z-50"
@@ -204,6 +225,7 @@
 
           // 2. Render Role Buttons
           renderRoleButtons(user.role);
+          loadHistory();
 
           // 3. Check Active Session
           checkActiveSession();
@@ -217,25 +239,382 @@
 
           vehs.forEach((i) => {
             vList.innerHTML += `
-                    <div class="bg-white p-3 rounded-lg border border-gray-100 flex justify-between items-center shadow-sm">
-                        <div>
-                            <div class="font-bold text-gray-800 text-sm">${
-                              i.vehicle.model
-                            } ${i.isPrimary ? "⭐" : ""}</div>
-                            <div class="text-xs text-gray-500 font-mono">${
-                              i.vehicle.registerNumber
-                            }</div>
-                        </div>
-                        <span class="text-[10px] bg-gray-100 px-2 py-1 rounded font-bold text-gray-600 uppercase">${
-                          i.vehicle.vehicleType
-                        }</span>
-                    </div>`;
+                          <div class="bg-white p-3 rounded-lg border border-gray-100 flex justify-between items-center shadow-sm">
+                              <div>
+                                  <div class="font-bold text-gray-800 text-sm">${
+                                    i.vehicle.model
+                                  } ${i.isPrimary ? "⭐" : ""}</div>
+                                  <div class="text-xs text-gray-500 font-mono">${
+                                    i.vehicle.registerNumber
+                                  }</div>
+                              </div>
+                              <span class="text-[10px] bg-gray-100 px-2 py-1 rounded font-bold text-gray-600 uppercase">${
+                                i.vehicle.vehicleType
+                              }</span>
+                          </div>`;
           });
         } catch (e) {
           console.error(e);
           // alert("Session expired");
         }
       }
+
+      async function loadHistory() {
+        try {
+          const history = await fetchAPI("/bookings/list/history");
+          renderHistory(history);
+        } catch (e) {
+          document.getElementById("history-loader").innerText =
+            "Failed to load history";
+          console.log("failed to load");
+        }
+      }
+
+      // function renderHistory(list) {
+      //   const container = document.getElementById("history-container");
+      //   document.getElementById("history-loader").classList.add("hidden");
+      //   container.innerHTML = "";
+
+      //   if (!list || list.length === 0) {
+      //     container.innerHTML =
+      //       '<div class="text-center text-xs text-gray-400">No past bookings found.</div>';
+      //     return;
+      //   }
+
+      //   list.forEach((b) => {
+      //     const isCompleted = b.status === "COMPLETED";
+      //     const statusColor = isCompleted
+      //       ? "text-green-600 bg-green-50"
+      //       : "text-red-600 bg-red-50";
+
+      //     // --- LOGIC: Calculate Display Amount ---
+      //     let amountDisplay = "";
+      //     let noteDisplay = "";
+
+      //     if (isCompleted) {
+      //       // For Completed: Show only THIS booking's fee (ignore total paid which might include old dues)
+      //       const totalFee =
+      //         (b.finalReservationFee || 0) + (b.finalParkingFee || 0);
+      //       amountDisplay = `<span class="font-bold text-gray-800">₹${totalFee.toFixed(
+      //         2
+      //       )}</span>`;
+      //     } else if (b.status === "CANCELLED_NO_SHOW") {
+      //       // For Cancelled: Check if Paid or Pending
+      //       if (b.amountPaid > 0) {
+      //         amountDisplay = `<span class="font-bold text-red-600">Penalty Paid: ₹${b.amountPaid.toFixed(
+      //           2
+      //         )}</span>`;
+      //       } else {
+      //         amountDisplay = `<span class="font-bold text-red-600">Pending: ₹${b.amountPending.toFixed(
+      //           2
+      //         )}</span>`;
+      //         noteDisplay = `<div class="mt-2 text-[10px] text-amber-600 bg-amber-50 p-2 rounded border border-amber-100">
+      //                   ⚠️ Debt added. Will be deducted in next booking.
+      //               </div>`;
+      //       }
+      //     }
+
+      //     // HTML for Card
+      //     const html = `
+      //           <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+      //               <!-- Summary Row (Always Visible) -->
+      //               <div class="p-4 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition" onclick="toggleDetails(${
+      //                 b.id
+      //               })">
+      //                   <div class="flex items-center gap-3">
+      //                       <div class="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold ${statusColor}">
+      //                           ${isCompleted ? "✓" : "✕"}
+      //                       </div>
+      //                       <div>
+      //                           <h4 class="text-sm font-bold text-gray-800">${
+      //                             b.areaName || "Unknown"
+      //                           }</h4>
+      //                           <div class="text-[10px] text-gray-500">${new Date(
+      //                             b.bookingTime || b.reservationTime
+      //                           ).toLocaleDateString()}</div>
+      //                       </div>
+      //                   </div>
+      //                   <div class="text-right">
+      //                       <div class="text-xs font-bold">${b.status.replace(
+      //                         /_/g,
+      //                         " "
+      //                       )}</div>
+      //                       <div class="text-[10px] text-gray-400">ID: ${
+      //                         b.id
+      //                       } ▼</div>
+      //                   </div>
+      //               </div>
+
+      //               <!-- Details Row (Hidden by default) -->
+      //               <div id="hist-det-${
+      //                 b.id
+      //               }" class="hidden bg-gray-50 p-4 border-t border-gray-100 text-xs text-gray-600">
+      //                   <div class="grid grid-cols-2 gap-2 mb-3">
+      //                       <div><span class="block text-gray-400 text-[10px]">Vehicle</span>${
+      //                         b.vehicleNumber
+      //                       }</div>
+      //                       <div><span class="block text-gray-400 text-[10px]">Slot</span>${
+      //                         b.slotNumber
+      //                       }</div>
+      //                       <div><span class="block text-gray-400 text-[10px]">Reservation Fee</span>₹${(
+      //                         b.finalReservationFee || 0
+      //                       ).toFixed(2)}</div>
+      //                       <div><span class="block text-gray-400 text-[10px]">Parking Fee</span>₹${(
+      //                         b.finalParkingFee || 0
+      //                       ).toFixed(2)}</div>
+      //                   </div>
+
+      //                   <div class="flex justify-between items-center border-t border-gray-200 pt-2">
+      //                       <span class="font-bold">Total for this Session:</span>
+      //                       ${amountDisplay}
+      //                   </div>
+      //                   ${noteDisplay}
+      //               </div>
+      //           </div>
+      //       `;
+      //     container.innerHTML += html;
+      //   });
+      // }
+
+      // Toggle Function
+      // function renderHistory(list) {
+      //   const container = document.getElementById("history-container");
+      //   document.getElementById("history-loader").classList.add("hidden");
+      //   container.innerHTML = "";
+
+      //   if (!list || list.length === 0) {
+      //     container.innerHTML =
+      //       '<div class="text-center text-xs text-gray-400">No past bookings found.</div>';
+      //     return;
+      //   }
+
+      //   list.forEach((b) => {
+      //     const isCompleted = b.status === "COMPLETED";
+      //     const statusColor = isCompleted
+      //       ? "text-green-600 bg-green-50"
+      //       : "text-red-600 bg-red-50";
+
+      //     // --- LOGIC: Calculate Display Amount ---
+      //     let amountDisplay = "";
+      //     let noteDisplay = "";
+
+      //     // SAFELY ACCESS VALUES (Use || 0 to prevent crashes)
+      //     const fResFee = b.finalReservationFee || 0;
+      //     const fParkFee = b.finalParkingFee || 0;
+      //     const amtPaid = b.amountPaid || 0;
+      //     const amtPending = b.amountPending || 0;
+
+      //     if (isCompleted) {
+      //       const totalFee = fResFee + fParkFee;
+      //       amountDisplay = `<span class="font-bold text-gray-800">₹${totalFee.toFixed(
+      //         2
+      //       )}</span>`;
+      //     } else if (
+      //       b.status === "CANCELLED_NO_SHOW" ||
+      //       b.status === "DEFAULTED"
+      //     ) {
+      //       if (amtPaid > 0) {
+      //         amountDisplay = `<span class="font-bold text-red-600">Penalty Paid: ₹${amtPaid.toFixed(
+      //           2
+      //         )}</span>`;
+      //       } else {
+      //         amountDisplay = `<span class="font-bold text-red-600">Pending: ₹${amtPending.toFixed(
+      //           2
+      //         )}</span>`;
+      //         noteDisplay = `<div class="mt-2 text-[10px] text-amber-600 bg-amber-50 p-2 rounded border border-amber-100">
+      //                   ⚠️ Debt added. Will be deducted in next booking.
+      //               </div>`;
+      //       }
+      //     }
+
+      //     // Time Display Logic
+      //     const displayTime =
+      //       b.bookingTime || b.reservationTime || new Date().toISOString();
+
+      //     const html = `
+      //           <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+      //               <!-- Summary Row -->
+      //               <div class="p-4 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition" onclick="toggleDetails(${
+      //                 b.id
+      //               })">
+      //                   <div class="flex items-center gap-3">
+      //                       <div class="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold ${statusColor}">
+      //                           ${isCompleted ? "✓" : "✕"}
+      //                       </div>
+      //                       <div>
+      //                           <h4 class="text-sm font-bold text-gray-800">${
+      //                             b.areaName || "Unknown"
+      //                           }</h4>
+      //                           <div class="text-[10px] text-gray-500">${new Date(
+      //                             displayTime
+      //                           ).toLocaleDateString()}</div>
+      //                       </div>
+      //                   </div>
+      //                   <div class="text-right">
+      //                       <div class="text-xs font-bold">${b.status.replace(
+      //                         /_/g,
+      //                         " "
+      //                       )}</div>
+      //                       <div class="text-[10px] text-gray-400">ID: ${
+      //                         b.id
+      //                       } ▼</div>
+      //                   </div>
+      //               </div>
+
+      //               <!-- Details Row -->
+      //               <div id="hist-det-${
+      //                 b.id
+      //               }" class="hidden bg-gray-50 p-4 border-t border-gray-100 text-xs text-gray-600">
+      //                   <div class="grid grid-cols-2 gap-2 mb-3">
+      //                       <div><span class="block text-gray-400 text-[10px]">Vehicle</span>${
+      //                         b.vehicleNumber || "--"
+      //                       }</div>
+      //                       <div><span class="block text-gray-400 text-[10px]">Slot</span>${
+      //                         b.slotNumber || "--"
+      //                       }</div>
+      //                       <div><span class="block text-gray-400 text-[10px]">Reservation Fee</span>₹${fResFee.toFixed(
+      //                         2
+      //                       )}</div>
+      //                       <div><span class="block text-gray-400 text-[10px]">Parking Fee</span>₹${fParkFee.toFixed(
+      //                         2
+      //                       )}</div>
+      //                   </div>
+
+      //                   <div class="flex justify-between items-center border-t border-gray-200 pt-2">
+      //                       <span class="font-bold">Session Total:</span>
+      //                       ${amountDisplay}
+      //                   </div>
+      //                   ${noteDisplay}
+      //               </div>
+      //           </div>
+      //       `;
+      //     container.innerHTML += html;
+      //   });
+      // }
+
+      function renderHistory(list) {
+        const container = document.getElementById("history-container");
+        document.getElementById("history-loader").classList.add("hidden");
+        container.innerHTML = "";
+
+        if (!list || list.length === 0) {
+          container.innerHTML =
+            '<div class="text-center text-xs text-gray-400">No past bookings found.</div>';
+          return;
+        }
+
+        list.forEach((b) => {
+          const isCompleted = b.status === "COMPLETED";
+
+          // --- LOGIC: Calculate Display Amount ---
+          let amountDisplay = "";
+          let noteDisplay = "";
+
+          // SAFELY ACCESS VALUES (Use || 0 to prevent crashes)
+          const fResFee = b.finalReservationFee || 0;
+          const fParkFee = b.finalParkingFee || 0;
+          const amtPaid = b.amountPaid || 0;
+          const amtPending = b.amountPending || 0;
+
+          const statusColor =
+            amtPending > 0
+              ? "text-red-600 bg-red-50"
+              : "text-green-600 bg-green-50";
+          console.log(b);
+
+          if (isCompleted) {
+            const totalFee = fResFee + fParkFee;
+            amountDisplay = `<span class="font-bold text-gray-800">₹${totalFee.toFixed(
+              2
+            )}</span>`;
+          } else if (
+            b.status === "CANCELLED_NO_SHOW" ||
+            b.status === "DEFAULTED"
+          ) {
+            if (amtPaid > 0) {
+              amountDisplay = `<span class="font-bold text-red-600">Penalty Paid: ₹${amtPaid.toFixed(
+                2
+              )}</span>`;
+            } else {
+              amountDisplay = `<span class="font-bold text-red-600">Pending: ₹${amtPending.toFixed(
+                2
+              )}</span>`;
+              noteDisplay = `<div class="mt-2 text-[10px] text-amber-600 bg-amber-50 p-2 rounded border border-amber-100">
+                              ⚠️ Debt added. Will be deducted in next booking.
+                          </div>`;
+            }
+          }
+
+          // Time Display Logic
+          const displayTime =
+            b.bookingTime || b.reservationTime || new Date().toISOString();
+
+          const html = `
+                      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                          <!-- Summary Row -->
+                          <div class="p-4 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition" onclick="toggleDetails(${
+                            b.id
+                          })">
+                              <div class="flex items-center gap-3">
+                                  <div class="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold ${statusColor}">
+                                      ${amtPending > 0 ? "✕" : "✓"}
+                                  </div>
+                                  <div>
+                                      <h4 class="text-sm font-bold text-gray-800">${
+                                        b.areaName || "Unknown"
+                                      }</h4>
+                                      <div class="text-[10px] text-gray-500">${new Date(
+                                        displayTime
+                                      ).toLocaleDateString()}</div>
+                                  </div>
+                              </div>
+                              <div class="text-right">
+                                  <div class="text-xs font-bold">${b.status.replace(
+                                    /_/g,
+                                    " "
+                                  )}</div>
+                                  <div class="text-[10px] text-gray-400">ID: ${
+                                    b.id
+                                  } ▼</div>
+                              </div>
+                          </div>
+
+                          <!-- Details Row -->
+                          <div id="hist-det-${
+                            b.id
+                          }" class="hidden bg-gray-50 p-4 border-t border-gray-100 text-xs text-gray-600">
+                              <div class="grid grid-cols-2 gap-2 mb-3">
+                                  <div><span class="block text-gray-400 text-[10px]">Vehicle</span>${
+                                    b.vehicleNumber || "--"
+                                  }</div>
+                                  <div><span class="block text-gray-400 text-[10px]">Slot</span>${
+                                    b.slotNumber || "--"
+                                  }</div>
+                                  <div><span class="block text-gray-400 text-[10px]">Reservation Fee</span>₹${fResFee.toFixed(
+                                    2
+                                  )}</div>
+                                  <div><span class="block text-gray-400 text-[10px]">Parking Fee</span>₹${fParkFee.toFixed(
+                                    2
+                                  )}</div>
+                              </div>
+
+                              <div class="flex justify-between items-center border-t border-gray-200 pt-2">
+                                  <span class="font-bold">Session Total:</span>
+                                  ${amountDisplay}
+                              </div>
+                              ${noteDisplay}
+                          </div>
+                      </div>
+                  `;
+          container.innerHTML += html;
+        });
+      }
+
+      // **After applying these two changes (Dto and JS), restart the server.** The blank history issue will be resolved.
+      window.toggleDetails = function (id) {
+        const el = document.getElementById(`hist-det-${id}`);
+        el.classList.toggle("hidden");
+      };
 
       async function fetchAPI(endpoint) {
         const res = await fetch(`${API_BASE}${endpoint}`, {

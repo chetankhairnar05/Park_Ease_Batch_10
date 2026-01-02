@@ -1,7 +1,7 @@
 package com.natche.park_ease.service;
 
 import com.natche.park_ease.dto.BookingRequest;
-import com.natche.park_ease.dto.response.BookingDto; // ✅ Import your DTO
+import com.natche.park_ease.dto.response.BookingDto;
 import com.natche.park_ease.entity.*;
 import com.natche.park_ease.enums.*;
 import com.natche.park_ease.repository.*;
@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -34,7 +35,7 @@ public class BookingService {
     public Booking createBooking(BookingRequest request, String userEmail) {
 
         User user = userRepository.findByEmailOrPhone(userEmail, userEmail).orElseThrow();
-        if (user.getIsBlocked()) throw new RuntimeException("Account Blocked.");
+        if (user.getIsBlocked()) throw new RuntimeException("Account Blocked. Please clear dues.");
 
         if (bookingRepository.findActiveBookingByVehicleId(request.getVehicleId()).isPresent()) { 
             throw new RuntimeException("Vehicle already in active booking.");
@@ -46,7 +47,6 @@ public class BookingService {
         if (slot.getStatus() != ParkingSlotStatus.AVAILABLE)
             throw new RuntimeException("Slot not available.");
 
-        // Use index 1 (Standard demand) for reservation multiplier
         Double multiplier = area.getReservationRateMultipliers().get(1);
 
         Booking booking = Booking.builder()
@@ -58,12 +58,12 @@ public class BookingService {
                 .reservationTime(LocalDateTime.now())
                 .status(request.getInitialStatus())
                 .hourlyReservationRateSnapshot(slot.getBaseHourlyRate() * multiplier)
-                .hourlyParkingRateSnapshot(slot.getBaseHourlyRate())
+                .hourlyParkingRateSnapshot(slot.getBaseHourlyRate()).amountPaid(0.0).amountPending(0.0)
                 .build();
 
-        // --- FAST MODE LOGIC (1 Real Second = 1 Virtual Minute) ---
+        // FAST MODE (1 Real Second = 1 Virtual Minute)
         if (request.getInitialStatus() == BookingStatus.RESERVED) {
-            // Expires in X seconds (representing X minutes)
+            // Expires in GracePeriod seconds
             booking.setExpectedEndTime(LocalDateTime.now().plusSeconds(area.getGracePeriodMinutes()));
             slot.setStatus(ParkingSlotStatus.RESERVED);
         } else {
@@ -75,10 +75,7 @@ public class BookingService {
         bookingRepository.save(booking);
         slotRepository.save(slot);
 
-        // 1. Notify Public Map (Red/Yellow tile)
         broadcastSlotUpdate(slot, area.getAreaId());
-        
-        // 2. Notify User Dashboard (Safe DTO)
         sendBookingUpdate(booking);
 
         return booking;
@@ -96,17 +93,20 @@ public class BookingService {
 
         booking.setArrivalTime(LocalDateTime.now());
 
-        // FAST MODE: Duration in Seconds = Virtual Minutes
-        long minutesReserved = Duration.between(
+        // FAST MODE: Duration in Real Seconds = Virtual Minutes
+        long virtualMinutesReserved = Duration.between(
                 booking.getReservationTime(),
                 booking.getArrivalTime()
         ).toSeconds();
 
-        if (minutesReserved <= booking.getArea().getReservationWaiverMinutes()) {
+        // 1. Check Waiver (e.g., 10 virtual mins)
+        if (virtualMinutesReserved <= booking.getArea().getReservationWaiverMinutes()) {
             booking.setFinalReservationFee(0.0);
         } else {
-            Double hours = Math.max(1.0, minutesReserved / 60.0);
-            booking.setFinalReservationFee(hours * booking.getHourlyReservationRateSnapshot());
+            // 2. Calculate Exact Hours (Minutes / 60)
+            // UPDATED: Removed Math.max(1.0, ...) to allow pro-rata billing (e.g. 0.5 hours)
+            Double virtualHours = virtualMinutesReserved / 60.0;
+            booking.setFinalReservationFee(virtualHours * booking.getHourlyReservationRateSnapshot());
         }
 
         booking.setStatus(BookingStatus.ACTIVE_PARKING);
@@ -133,23 +133,25 @@ public class BookingService {
         booking.setDepartureTime(LocalDateTime.now());
 
         // FAST MODE: Duration in Seconds = Virtual Minutes
-        long minutesParked = Duration.between(
+        long virtualMinutesParked = Duration.between(
                 booking.getArrivalTime(),
                 booking.getDepartureTime()
         ).toSeconds();
 
-        Double hours = Math.max(1.0, minutesParked / 60.0);
-        booking.setFinalParkingFee(hours * booking.getHourlyParkingRateSnapshot());
+        // UPDATED: Removed Math.max(1.0, ...) to charge exactly for time used
+        Double virtualHours = virtualMinutesParked / 60.0;
+        booking.setFinalParkingFee(virtualHours * booking.getHourlyParkingRateSnapshot());
 
-        Double totalBill = (booking.getFinalReservationFee() != null ? booking.getFinalReservationFee() : 0.0)
+        Double currentBill = (booking.getFinalReservationFee() != null ? booking.getFinalReservationFee() : 0.0)
                          + booking.getFinalParkingFee();
 
-        Double dues = dueRepository.getTotalPendingDuesByUserId(booking.getUser().getUserId());
-        if (dues == null) dues = 0.0;
+        List<OutstandingDue> unpaidDues = dueRepository.findByUser_UserIdAndIsPaidFalse(booking.getUser().getUserId());
+        Double oldDuesAmount = unpaidDues.stream().mapToDouble(OutstandingDue::getAmount).sum();
 
-        Double grandTotal = totalBill + dues;
+        Double grandTotal = currentBill + oldDuesAmount;
 
         User user = booking.getUser();
+        Double walletBalance = user.getWalletBalance() != null ? user.getWalletBalance() : 0.0;
 
         Payment payment = Payment.builder()
                 .user(user)
@@ -158,17 +160,47 @@ public class BookingService {
                 .isBookingPayment(true)
                 .build();
 
-        if (user.getWalletBalance() >= grandTotal) {
-            user.setWalletBalance(user.getWalletBalance() - grandTotal);
+        if (walletBalance >= grandTotal) {
+            // SUCCESS
+            user.setWalletBalance(walletBalance - grandTotal);
             payment.setMethod(PaymentMethod.WALLET);
             payment.setStatus(PaymentStatus.SUCCESS);
+
+
 
             booking.setStatus(BookingStatus.COMPLETED);
             booking.setAmountPaid(grandTotal);
             booking.setExitToken(UUID.randomUUID().toString());
             booking.getSlot().setStatus(ParkingSlotStatus.AVAILABLE);
+            
+            // Clear the Old Debt
+            for (OutstandingDue due : unpaidDues) {
+                //here we need to get that booking related to the outstanding due and set the amount pending to 0 and amount paid previous amount pending
+               Booking oldBooking = due.getBooking();
+                
+                // We assume the user pays the debt amount
+                Double debtAmount = due.getAmount();
+
+                // Update Old Booking Financials
+                // Paid = What was previously paid + What we just collected
+                double prevPaid = oldBooking.getAmountPaid() != null ? oldBooking.getAmountPaid() : 0.0;
+                oldBooking.setAmountPaid(prevPaid + debtAmount);
+                oldBooking.setAmountPending(0.0);
+                
+                // If old booking was Defaulted/Cancelled, we can mark it completed or keep status as history
+                // Usually financial fields are enough, but let's ensure it looks "Settled"
+                // oldBooking.setStatus(BookingStatus.COMPLETED); // Optional, maybe keep CANCELLED_NO_SHOW as history
+
+                bookingRepository.save(oldBooking);
+
+                // Mark Due as Paid
+                due.setIsPaid(true);
+                dueRepository.save(due);
+            }
+
         } else {
-            throw new RuntimeException("Insufficient Wallet Balance. Need: " + grandTotal);
+            // FAILED
+            throw new RuntimeException("Insufficient Wallet Balance. Need: ₹" + String.format("%.2f", grandTotal));
         }
 
         userRepository.save(user);
@@ -182,10 +214,7 @@ public class BookingService {
         return booking;
     }
 
-    // ======================================================
-    // HELPERS (NOTIFICATIONS)
-    // ======================================================
-
+    // ... Helpers ...
     private void broadcastSlotUpdate(ParkingSlot slot, Long areaId) {
         Map<String, Object> updateMsg = Map.of(
             "slotId", slot.getSlotId(),
@@ -196,12 +225,11 @@ public class BookingService {
         messagingTemplate.convertAndSend("/topic/area/" + areaId + "/slots", updateMsg);
     }
 
-    // ✅ FIX: Send DTO instead of Entity to prevent ByteBuddy Recursion Error
     private void sendBookingUpdate(Booking booking) {
         try {
             BookingDto dto = BookingDto.fromEntity(booking);
             messagingTemplate.convertAndSendToUser(
-                booking.getUser().getEmail(), // Assuming Email is username
+                booking.getUser().getEmail(), 
                 "/queue/booking-updates", 
                 dto
             );

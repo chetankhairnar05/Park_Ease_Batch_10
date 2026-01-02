@@ -41,4 +41,9 @@ boolean isVehicleCurrentlyBusy(@Param("vehicleId") Long vehicleId);
 
     // ✅ NEW: Find ALL active bookings (List)
     List<Booking> findByUser_UserIdAndStatusIn(Long userId, Collection<BookingStatus> statuses);
+
+
+     // 5. Find all bookings for a specific area (For Owner Analytics)
+    List<Booking> findByArea_AreaId(Long areaId);
+
 }

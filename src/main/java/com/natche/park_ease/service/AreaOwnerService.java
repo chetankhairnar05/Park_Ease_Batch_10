@@ -4,14 +4,18 @@ import com.natche.park_ease.dto.CreateParkingAreaRequest;
 import com.natche.park_ease.dto.GuardRegisterRequest;
 import com.natche.park_ease.dto.SlotUpdateRequest;
 import com.natche.park_ease.dto.UpdateParkingAreaRequest;
+import com.natche.park_ease.dto.response.AreaStatisticsDto;
 import com.natche.park_ease.dto.response.GuardDto;
+import com.natche.park_ease.entity.Booking;
 import com.natche.park_ease.entity.Guard;
 import com.natche.park_ease.entity.ParkingArea;
 import com.natche.park_ease.entity.ParkingSlot;
 import com.natche.park_ease.entity.User;
+import com.natche.park_ease.enums.BookingStatus;
 import com.natche.park_ease.enums.ParkingSlotStatus;
 import com.natche.park_ease.enums.UserRole;
 import com.natche.park_ease.enums.VehicleType;
+import com.natche.park_ease.repository.BookingRepository;
 import com.natche.park_ease.repository.GuardRepository;
 import com.natche.park_ease.repository.ParkingAreaRepository;
 import com.natche.park_ease.repository.ParkingSlotRepository;
@@ -21,6 +25,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -556,7 +562,91 @@ public List<ParkingArea> getAreasByOwner(String ownerEmail) {
                 .map(GuardDto::fromEntity)
                 .collect(Collectors.toList());
     }
-  
+    
+
+        @Autowired
+    private BookingRepository bookingRepository; // Ensure this is injected
+
+    public AreaStatisticsDto getAreaStatistics(Long areaId, String ownerEmail) {
+        // 1. Verify Ownership
+        User loggedInOwner = userRepository.findByEmailOrPhone(ownerEmail, ownerEmail).orElseThrow();
+        ParkingArea area = parkingAreaRepository.findById(areaId).orElseThrow(() -> new RuntimeException("Area not found"));
+
+        if ((loggedInOwner.getRole() != UserRole.ADMIN|| loggedInOwner.getRole() != UserRole.AREA_OWNER) && 
+            !Objects.equals(area.getAreaOwner().getUserId(), loggedInOwner.getUserId())) {
+            throw new RuntimeException("Access Denied");
+        }
+
+        // 2. Fetch All Bookings for this Area
+        List<Booking> bookings = bookingRepository.findByArea_AreaId(areaId);
+
+        // 3. Aggregate Data
+        double totalEarnings = 0.0;
+        double totalPending = 0.0;
+        long completed = 0;
+        long cancelled = 0;
+        long active = 0;
+        double resHours = 0.0;
+        double parkHours = 0.0;
+
+        Set<Long> userIds = new java.util.HashSet<>();
+        Set<Long> vehicleIds = new java.util.HashSet<>();
+
+        for (Booking b : bookings) {
+            // Count Uniques
+            if (b.getUser() != null) userIds.add(b.getUser().getUserId());
+            if (b.getVehicle() != null) vehicleIds.add(b.getVehicle().getVehicleId());
+
+            // Money
+            if (b.getAmountPaid() != null) totalEarnings += b.getAmountPaid();
+            if (b.getAmountPending() != null) totalPending += b.getAmountPending();
+
+            // Status Counts
+            if (b.getStatus() == BookingStatus.COMPLETED) completed++;
+            else if (b.getStatus() == BookingStatus.CANCELLED_NO_SHOW || b.getStatus() == BookingStatus.DEFAULTED) cancelled++;
+            else if (b.getStatus() == BookingStatus.RESERVED || b.getStatus() == BookingStatus.ACTIVE_PARKING) active++;
+
+            // --- Time Calculation (Robust Null Checks) ---
+            
+            // A. Reservation Duration
+            if (b.getReservationTime() != null) {
+                LocalDateTime endRes = null;
+                if (b.getArrivalTime() != null) endRes = b.getArrivalTime(); // Arrived
+                else if (b.getExpectedEndTime() != null) endRes = b.getExpectedEndTime(); // Expired/Reserved
+                else if (b.getStatus() == BookingStatus.RESERVED) endRes = LocalDateTime.now(); // Currently Running
+
+                if (endRes != null) {
+                    long seconds = Duration.between(b.getReservationTime(), endRes).toSeconds();
+                    resHours += (seconds / 60.0); // Fast Mode: 60 sec = 1 hr
+                }
+            }
+
+            // B. Parking Duration
+            if (b.getArrivalTime() != null) {
+                LocalDateTime endPark = null;
+                if (b.getDepartureTime() != null) endPark = b.getDepartureTime(); // Exited
+                else if (b.getStatus() == BookingStatus.ACTIVE_PARKING) endPark = LocalDateTime.now(); // Currently Parked
+
+                if (endPark != null) {
+                    long seconds = Duration.between(b.getArrivalTime(), endPark).toSeconds();
+                    parkHours += (seconds / 60.0); // Fast Mode
+                }
+            }
+        }
+
+        return AreaStatisticsDto.builder()
+                .totalBookings((long) bookings.size())
+                .totalEarnings(totalEarnings)
+                .totalPending(totalPending)
+                .completedBookings(completed)
+                .cancelledBookings(cancelled)
+                .activeBookings(active)
+                .uniqueUsers((long) userIds.size())
+                .uniqueVehicles((long) vehicleIds.size())
+                .totalReservationHours(Math.round(resHours * 100.0) / 100.0) // Round to 2 decimals
+                .totalParkingHours(Math.round(parkHours * 100.0) / 100.0)
+                .build();
+    }
 
 
 
