@@ -56,7 +56,8 @@ public class SecurityConfig {
 
             // Public and protected routes
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/error").permitAll() .requestMatchers(
+            .requestMatchers("/error").permitAll()
+            .requestMatchers(
         "/", 
         "/index.html",
         "/auth.html",

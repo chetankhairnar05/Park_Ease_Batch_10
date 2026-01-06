@@ -43,14 +43,14 @@
         <span>Your Wallet Balance is:</span>
         ₹<span id="header-wallet">0.00</span>
       </div>
-      <div
+      <!-- <div
         class="px-4 py-2 rounded-full text-xs font-medium backdrop-blur-sm bg-gray-300 mx-3 my-3"
       >
         <span
           >Important Note: Fast-Forward Mode: 1 second in real life = 1 minute
           in the app. (Speeds up testing for long bookings).</span
         >
-      </div>
+      </div> -->
       <div class="p-5 space-y-6 overflow-y-auto flex-1">
         <!-- Quick Action: Active Booking -->
         <div
@@ -211,7 +211,10 @@
       const API_BASE = "http://localhost:8080/api";
       const token = localStorage.getItem("parkease_token");
 
-      if (!token) window.location.href = "auth.html";
+      // Check if token exists FIRST, then trim and check length
+      if (!token || token.trim().length === 0) {
+        window.location.href = "auth.html";
+      }
 
       async function init() {
         try {
@@ -222,6 +225,13 @@
           document.getElementById("header-wallet").innerText = (
             user.walletBalance || 0
           ).toFixed(2);
+
+          if (user.role === "AREA_OWNER") {
+            window.location.href = "owner-dashboard.html";
+          }
+          if (user.role === "ADMIN") {
+            window.location.href = "admin-dashboard.html";
+          }
 
           // 2. Render Role Buttons
           renderRoleButtons(user.role);

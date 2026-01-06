@@ -12,6 +12,7 @@ import com.natche.park_ease.repository.UserRepository;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -124,6 +125,33 @@ public class AdminController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(dtos);
+    }
+
+
+    // 1. Get Pending Approvals
+    @GetMapping("/pending-approvals")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<UserProfileDto>> getPendingApprovals() {
+        List<User> pendingUsers = userRepository.findByIsEnabledFalse();
+        
+        List<UserProfileDto> dtos = pendingUsers.stream()
+                .map(UserProfileDto::fromEntity)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
+    }
+
+    // 2. Approve User (Enable Account)
+    @PutMapping("/approve/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> approveUser(@PathVariable Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        user.setIsEnabled(true); // Activate account
+        userRepository.save(user);
+
+        return ResponseEntity.ok(Map.of("message", "User " + user.getName() + " has been approved successfully."));
     }
     
 }

@@ -39,8 +39,8 @@ public class BookingScheduler {
     @Autowired private PaymentRepository paymentRepository;
     @Autowired private SimpMessagingTemplate messagingTemplate;
 
-    // FAST MODE: Checks every 1 second
-    @Scheduled(fixedRate = 1000)
+    // FAST MODE: Checks every 30 second
+    @Scheduled(fixedRate = 30000)
     @Transactional
     public void checkExpiredReservations() {
         
@@ -53,15 +53,15 @@ public class BookingScheduler {
         for (Booking booking : expiredBookings) {
 
             // 1. CALCULATE PENALTY (FAST MODE)
-            long secondsWasted = Duration.between(
+            long minutesWasted = Duration.between(
                     booking.getReservationTime(),
                     now
-            ).toSeconds();
+            ).toMinutes();
 
             // FAST MODE: 1 Real Sec = 1 Virtual Min
             // 60 Real Secs = 1 Virtual Hour
             // No minimum charge logic here to keep it strictly mathematical
-            double hours = secondsWasted / 60.0; 
+            double hours = minutesWasted / 60.0; 
             
             double penalty = hours * booking.getHourlyReservationRateSnapshot();
 

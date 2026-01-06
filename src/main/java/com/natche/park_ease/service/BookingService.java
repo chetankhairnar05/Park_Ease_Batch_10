@@ -64,7 +64,7 @@ public class BookingService {
         // FAST MODE (1 Real Second = 1 Virtual Minute)
         if (request.getInitialStatus() == BookingStatus.RESERVED) {
             // Expires in GracePeriod seconds
-            booking.setExpectedEndTime(LocalDateTime.now().plusSeconds(area.getGracePeriodMinutes()));
+            booking.setExpectedEndTime(LocalDateTime.now().plusMinutes(area.getGracePeriodMinutes()));
             slot.setStatus(ParkingSlotStatus.RESERVED);
         } else {
             booking.setArrivalTime(LocalDateTime.now());
@@ -97,7 +97,7 @@ public class BookingService {
         long virtualMinutesReserved = Duration.between(
                 booking.getReservationTime(),
                 booking.getArrivalTime()
-        ).toSeconds();
+        ).toMinutes();
 
         // 1. Check Waiver (e.g., 10 virtual mins)
         if (virtualMinutesReserved <= booking.getArea().getReservationWaiverMinutes()) {
@@ -136,7 +136,7 @@ public class BookingService {
         long virtualMinutesParked = Duration.between(
                 booking.getArrivalTime(),
                 booking.getDepartureTime()
-        ).toSeconds();
+        ).toMinutes();
 
         // UPDATED: Removed Math.max(1.0, ...) to charge exactly for time used
         Double virtualHours = virtualMinutesParked / 60.0;

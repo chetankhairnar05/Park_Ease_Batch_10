@@ -41,7 +41,7 @@
             >Owner</span
           >
           <a
-            href="dashboard.html"
+            href="profile.html"
             class="text-sm bg-amber-800 hover:bg-amber-700 px-3 py-1.5 rounded-lg transition"
             >Back to User View</a
           >
@@ -502,7 +502,7 @@
       async function init() {
         try {
           const user = await fetchAPI("/user/profile");
-          if (user.role !== "AREA_OWNER" && user.role !== "ADMIN") {
+          if (user.role !== "AREA_OWNER") {
             alert("Access Denied: Owners Only");
             window.location.href = "dashboard.html";
             return;

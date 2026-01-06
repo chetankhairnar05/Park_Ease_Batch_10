@@ -616,8 +616,8 @@ public List<ParkingArea> getAreasByOwner(String ownerEmail) {
                 else if (b.getStatus() == BookingStatus.RESERVED) endRes = LocalDateTime.now(); // Currently Running
 
                 if (endRes != null) {
-                    long seconds = Duration.between(b.getReservationTime(), endRes).toSeconds();
-                    resHours += (seconds / 60.0); // Fast Mode: 60 sec = 1 hr
+                    long minutes = Duration.between(b.getReservationTime(), endRes).toMinutes();
+                    resHours += (minutes / 60.0); // Fast Mode: 60 sec = 1 hr
                 }
             }
 
@@ -628,8 +628,8 @@ public List<ParkingArea> getAreasByOwner(String ownerEmail) {
                 else if (b.getStatus() == BookingStatus.ACTIVE_PARKING) endPark = LocalDateTime.now(); // Currently Parked
 
                 if (endPark != null) {
-                    long seconds = Duration.between(b.getArrivalTime(), endPark).toSeconds();
-                    parkHours += (seconds / 60.0); // Fast Mode
+                    long minutes = Duration.between(b.getArrivalTime(), endPark).toMinutes();
+                    parkHours += (minutes / 60.0); // Fast Mode
                 }
             }
         }

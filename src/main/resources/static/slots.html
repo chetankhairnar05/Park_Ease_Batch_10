@@ -55,7 +55,7 @@
       </header>
 
       <!-- Map -->
-      <div id="map" class="w-full h-64 bg-gray-200 z-0"></div>
+      <div id="map" class="w-full h-[450px] bg-gray-200 z-0"></div>
 
       <!-- Results List -->
       <div
@@ -217,6 +217,11 @@
         // Get user location for map init
         try {
           const user = await fetchAPI("/user/profile");
+          if (user.role !== "DRIVER") {
+            alert("Only DRIVER Route");
+            window.location.href = "dashboard.html";
+            return;
+          }
           if (user.latitude && user.longitude) {
             initMap(user.latitude, user.longitude);
           } else {

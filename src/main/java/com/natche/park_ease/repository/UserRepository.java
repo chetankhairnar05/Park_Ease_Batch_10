@@ -25,4 +25,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // Flexible login (allow user to enter either email or phone in the same field)
     Optional<User> findByEmailOrPhone(String email, String phone);
+
+        // ✅ NEW: Find users waiting for approval
+    List<User> findByIsEnabledFalse();
 }

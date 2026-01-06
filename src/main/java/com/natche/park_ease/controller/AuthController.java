@@ -86,5 +86,52 @@ public class AuthController {
         
         return ResponseEntity.ok("User Registered Successfully");
     }
+
+
+// --- REGISTER API ---
+@PostMapping("/register-official")
+public ResponseEntity<?> registerOfficial(@RequestBody RegisterRequest request) {
+
+    // 1. Check if user exists
+    if (userRepository.findByEmailOrPhone(request.getEmail(), request.getPhone()).isPresent()) {
+        return ResponseEntity.badRequest().body("User already exists with this email or phone");
+    }
+
+    try {
+        // 2. Validate Role is not null
+        if (request.getRole() == null || request.getRole().trim().isEmpty()) {
+             return ResponseEntity.badRequest().body("Role is required (ADMIN or AREA_OWNER)");
+        }
+
+        // 3. Convert String to Enum (This handles the logic safely)
+        UserRole role = UserRole.valueOf(request.getRole().toUpperCase());
+
+        // 4. Build User
+        User user = User.builder()
+                .name(request.getName())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(role)
+                .isEnabled(false) // CHANGED TO TRUE: If false, they cannot login immediately!
+                .isBlocked(false)
+                .latitude("22.73860505802358")
+                .longitude("75.88164655202729")
+                .walletBalance(0.0)
+                .build();
+
+        userRepository.save(user);
+
+        return ResponseEntity.ok("User Registered Successfully");
+
+    } catch (IllegalArgumentException e) {
+        // 5. Catch Invalid Enum error specifically
+        return ResponseEntity.badRequest().body("Invalid Role. Allowed values: ADMIN, AREA_OWNER");
+    } catch (Exception e) {
+        // 6. Catch any other database errors
+        return ResponseEntity.internalServerError().body("Error registering user: " + e.getMessage());
+    }
 }
 
+
+}

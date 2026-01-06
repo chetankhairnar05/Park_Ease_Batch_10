@@ -50,7 +50,9 @@
         </div>
 
         <!-- Wallet -->
-        <div class="bg-gray-900 rounded-2xl p-5 text-white shadow-xl">
+        <div
+          class="bg-gray-900 rounded-2xl p-5 text-white shadow-xl only-driver"
+        >
           <p class="text-xs text-gray-400 mb-1">Wallet Balance</p>
           <div class="text-3xl font-bold mb-4">
             ₹<span id="p-wallet">0.00</span>
@@ -72,7 +74,7 @@
         </div>
 
         <!-- Location -->
-        <div>
+        <div class="only-driver">
           <h3 class="font-bold text-gray-900 text-sm mb-3">
             Location Settings
           </h3>
@@ -107,7 +109,7 @@
         </div>
 
         <!-- Vehicles -->
-        <div>
+        <div class="only-driver">
           <div class="flex justify-between items-center mb-3">
             <h3 class="font-bold text-gray-900 text-sm">My Vehicles</h3>
             <a
@@ -154,7 +156,7 @@
         </a>
         <a
           href="slots.html"
-          class="flex flex-col items-center p-2 hover:text-indigo-600 transition"
+          class="flex flex-col items-center p-2 hover:text-indigo-600 transition only-driver"
         >
           <svg
             class="w-6 h-6 mb-1"
@@ -173,7 +175,7 @@
         </a>
         <a
           href="active-bookings.html"
-          class="flex flex-col items-center p-2 hover:text-indigo-600 transition"
+          class="flex flex-col items-center p-2 hover:text-indigo-600 transition only-driver"
         >
           <svg
             class="w-6 h-6 mb-1"
@@ -227,6 +229,11 @@
             document.getElementById("loc-lat").value = user.latitude;
           if (user.longitude)
             document.getElementById("loc-lon").value = user.longitude;
+
+          const driverOnlyElements = document.querySelectorAll(".only-driver");
+          if (user.role !== "DRIVER") {
+            driverOnlyElements.forEach((el) => el.classList.add("hidden"));
+          }
 
           // Vehicles
           const vehs = await fetchAPI("/user/vehicles");

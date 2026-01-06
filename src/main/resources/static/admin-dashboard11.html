@@ -42,43 +42,14 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- LEFT COLUMN -->
-        <div class="lg:col-span-1 space-y-6">
-          <!-- 1. PENDING APPROVALS (NEW SECTION) -->
+        <!-- LEFT: CREATE STAFF FORM -->
+        <div class="lg:col-span-1">
           <div
-            class="bg-white rounded-xl shadow-sm border border-orange-200 overflow-hidden"
+            class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-24"
           >
-            <div
-              class="px-6 py-3 border-b border-orange-100 bg-orange-50 flex justify-between items-center"
-            >
-              <h2
-                class="text-sm font-bold text-orange-800 uppercase tracking-wider"
-              >
-                🔔 Pending Requests
-              </h2>
-              <span
-                id="pending-count"
-                class="bg-orange-200 text-orange-800 text-[10px] px-2 py-0.5 rounded-full font-bold"
-                >0</span
-              >
-            </div>
-            <div
-              id="pending-list"
-              class="divide-y divide-gray-50 max-h-64 overflow-y-auto"
-            >
-              <div class="p-6 text-center text-gray-400 text-xs">
-                No pending requests.
-              </div>
-            </div>
-          </div>
-
-          <!-- 2. CREATE STAFF FORM -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 class="text-lg font-bold text-gray-900 mb-1">
-              Create Staff Manually
-            </h2>
+            <h2 class="text-lg font-bold text-gray-900 mb-1">Create Staff</h2>
             <p class="text-xs text-gray-500 mb-6">
-              Create new Admins or Area Owners directly.
+              Create new Admins or Area Owners, or promote existing drivers.
             </p>
 
             <form onsubmit="createStaff(event)" class="space-y-4">
@@ -122,33 +93,41 @@
                 <label
                   class="block text-xs font-bold text-gray-500 uppercase mb-1"
                   >Full Name</label
-                ><input
+                >
+                <input
                   type="text"
                   id="s-name"
                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none"
+                  placeholder="Staff Name"
                   required
                 />
               </div>
+
               <div>
                 <label
                   class="block text-xs font-bold text-gray-500 uppercase mb-1"
                   >Email</label
-                ><input
+                >
+                <input
                   type="email"
                   id="s-email"
                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none"
+                  placeholder="staff@parkease.com"
                   required
                 />
               </div>
+
               <div class="grid grid-cols-2 gap-3">
                 <div>
                   <label
                     class="block text-xs font-bold text-gray-500 uppercase mb-1"
                     >Phone</label
-                  ><input
+                  >
+                  <input
                     type="text"
                     id="s-phone"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none"
+                    placeholder="9876543210"
                     required
                   />
                 </div>
@@ -156,10 +135,12 @@
                   <label
                     class="block text-xs font-bold text-gray-500 uppercase mb-1"
                     >Password</label
-                  ><input
+                  >
+                  <input
                     type="password"
                     id="s-pass"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none"
+                    placeholder="******"
                     required
                   />
                 </div>
@@ -186,17 +167,18 @@
               <h2
                 class="text-sm font-bold text-gray-700 uppercase tracking-wider"
               >
-                Active Staff Directory
+                System Staff Directory
               </h2>
               <button
-                onclick="loadAllData()"
+                onclick="loadStaffList()"
                 class="text-xs text-pink-600 hover:text-pink-800 font-bold"
               >
-                Refresh All
+                Refresh List
               </button>
             </div>
 
             <div id="staff-list" class="divide-y divide-gray-100">
+              <!-- Loading State -->
               <div class="p-8 text-center text-gray-400 text-sm">
                 Loading staff members...
               </div>
@@ -210,10 +192,12 @@
       const API_BASE = "http://localhost:8080/api";
       const token = localStorage.getItem("parkease_token");
 
+      // Security Check
       if (!token) window.location.href = "auth.html";
 
       async function init() {
         try {
+          // Verify Admin Role via Profile
           const user = await fetchAPI("/user/profile");
           if (user.role !== "ADMIN") {
             alert("Access Denied: Admins Only");
@@ -221,7 +205,9 @@
             return;
           }
           document.getElementById("admin-name").innerText = user.name;
-          loadAllData();
+
+          // Load Data
+          loadStaffList();
         } catch (e) {
           console.error(e);
           alert("Session Error");
@@ -236,8 +222,10 @@
         };
         const opts = { method, headers };
         if (body) opts.body = JSON.stringify(body);
+
         const res = await fetch(`${API_BASE}${endpoint}`, opts);
         const text = await res.text();
+
         if (!res.ok) throw new Error(text);
         try {
           return JSON.parse(text);
@@ -246,58 +234,6 @@
         }
       }
 
-      function loadAllData() {
-        loadStaffList();
-        loadPendingList();
-      }
-
-      // --- PENDING REQUESTS ---
-      async function loadPendingList() {
-        const container = document.getElementById("pending-list");
-        try {
-          const pending = await fetchAPI("/admin/pending-approvals");
-          document.getElementById("pending-count").innerText = pending.length;
-
-          if (pending.length === 0) {
-            container.innerHTML =
-              '<div class="p-6 text-center text-gray-400 text-xs">No pending requests.</div>';
-            return;
-          }
-
-          let html = "";
-          pending.forEach((u) => {
-            html += `
-                    <div class="p-4 flex items-center justify-between hover:bg-orange-50/50 transition">
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs font-bold text-gray-800">${u.name}</span>
-                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-gray-200 text-gray-600">${u.role}</span>
-                            </div>
-                            <div class="text-[10px] text-gray-500">${u.email}</div>
-                        </div>
-                        <button onclick="approveUser(${u.userId})" class="bg-green-600 text-white text-[10px] font-bold px-3 py-1.5 rounded hover:bg-green-700 shadow-sm">
-                            Approve
-                        </button>
-                    </div>`;
-          });
-          container.innerHTML = html;
-        } catch (err) {
-          console.error(err);
-        }
-      }
-
-      async function approveUser(userId) {
-        if (!confirm("Enable this user's account?")) return;
-        try {
-          const res = await fetchAPI(`/admin/approve/${userId}`, "PUT");
-          alert(res.message);
-          loadAllData();
-        } catch (err) {
-          alert(err.message);
-        }
-      }
-
-      // --- CREATE STAFF ---
       async function createStaff(e) {
         e.preventDefault();
         const btn = e.target.querySelector("button");
@@ -305,19 +241,21 @@
         btn.innerText = "Processing...";
         btn.disabled = true;
 
+        const role = document.querySelector('input[name="role"]:checked').value;
+
         const payload = {
           name: document.getElementById("s-name").value,
           email: document.getElementById("s-email").value,
           phone: document.getElementById("s-phone").value,
           password: document.getElementById("s-pass").value,
-          role: document.querySelector('input[name="role"]:checked').value,
+          role: role,
         };
 
         try {
           const res = await fetchAPI("/admin/create-staff", "POST", payload);
-          alert(res.message || res);
-          e.target.reset();
-          loadAllData();
+          alert(res.message || res); // Show success message
+          e.target.reset(); // Clear form
+          loadStaffList(); // Refresh table
         } catch (err) {
           alert("Error: " + err.message);
         } finally {
@@ -326,24 +264,28 @@
         }
       }
 
-      // --- ACTIVE STAFF LIST ---
       async function loadStaffList() {
         const listContainer = document.getElementById("staff-list");
         try {
+          // Note: Ensure endpoint has trailing slash if your controller has it: /get-all-staff/
           const staff = await fetchAPI("/admin/get-all-staff/");
+
           if (!Array.isArray(staff) || staff.length === 0) {
             listContainer.innerHTML =
-              '<div class="p-8 text-center text-gray-400 text-sm">No active staff found.</div>';
+              '<div class="p-8 text-center text-gray-400 text-sm">No staff found.</div>';
             return;
           }
+
           let html = "";
           staff.forEach((u) => {
             const badgeColor =
               u.role === "ADMIN"
                 ? "bg-pink-100 text-pink-700 border-pink-200"
                 : "bg-amber-100 text-amber-700 border-amber-200";
+
             const avatarBg =
               u.role === "ADMIN" ? "bg-pink-600" : "bg-amber-600";
+
             html += `
                     <div class="p-4 flex items-center justify-between hover:bg-gray-50 transition">
                         <div class="flex items-center space-x-4">
@@ -360,10 +302,9 @@
                             </div>
                         </div>
                         <div class="text-right">
-                            <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase border ${badgeColor}">${u.role.replace(
-              "_",
-              " "
-            )}</span>
+                            <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase border ${badgeColor}">
+                                ${u.role.replace("_", " ")}
+                            </span>
                             <div class="text-[10px] text-gray-400 mt-1">ID: ${
                               u.userId
                             }</div>
