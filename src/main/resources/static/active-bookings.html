@@ -30,7 +30,7 @@
       }
     </style>
   </head>
-  <body class="bg-gray-100 min-h-screen flex justify-center">
+  <body class="bg-gray-800 min-h-screen flex justify-center">
     <!-- Mobile Container -->
     <div
       class="w-full max-w-md bg-white min-h-screen shadow-2xl relative flex flex-col pb-20"
@@ -328,18 +328,18 @@
 
           const card = document.createElement("div");
           card.className =
-            "bg-white rounded-2xl shadow-sm border border-gray-100 p-5 card-enter relative overflow-hidden";
+            "bg-gray-400 rounded-2xl shadow-sm border border-gray-100 p-5 card-enter relative overflow-hidden";
           card.innerHTML = `
                 <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <h3 class="font-bold text-sm text-gray-900 truncate w-48">${
+                    <div class="bg-gray-900 px-3 py-2 rounded-2xl">
+                        <h3 class="font-bold text-md text-white truncate w-48">${
                           b.areaName || "Unknown Area"
                         }</h3>
-                        <div class="text-[10px] text-gray-500 font-mono mt-0.5">Slot: ${
+                        <div class="text-sm text-white font-mono mt-0.5">Slot: ${
                           b.slotNumber
                         }</div>
                     </div>
-                    <span class="px-2 py-1 rounded-md text-[10px] font-bold uppercase border ${statusColor}">
+                    <span class="px-1 py-1 rounded text-[10px] font-bold uppercase border ${statusColor}">
                         ${b.status.replace("_", " ")}
                     </span>
                 </div>
@@ -348,20 +348,20 @@
                     <div class="bg-white p-2 rounded-lg shadow-sm text-lg">🚗</div>
                     <div>
                         <div class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Vehicle</div>
-                        <div class="font-mono text-xs text-gray-800 font-medium">${
+                        <div class=" text-md text-gray-800 font-medium">${
                           b.vehicleNumber
                         }</div>
                     </div>
                 </div>
 
                 <div class="text-center mb-5">
-                    <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">
+                    <div class="text-[10px] text-black uppercase tracking-widest mb-1">
                         ${isReserved ? "Time Reserved" : "Parking Duration"}
                     </div>
                     <div id="timer-${
                       b.id
-                    }" class="text-2xl font-mono font-bold text-gray-800 tracking-tight">00:00</div>
-                    <div class="text-[10px] text-gray-400 mt-1">Started: ${startedAt}</div>
+                    }" class="text-2xl font-black font-bold text-black tracking-tight">00:00</div>
+                    <div class="text-[13px] font-bold text-black mt-1">Started: ${startedAt}</div>
                 </div>
 
                 <div class="flex gap-3">

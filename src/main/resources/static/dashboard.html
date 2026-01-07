@@ -15,14 +15,14 @@
       }
     </style>
   </head>
-  <body class="bg-gray-100 min-h-screen flex justify-center">
+  <body class="bg-gray-800 min-h-screen flex justify-center">
     <!-- Mobile Container -->
     <div
       class="w-full max-w-md bg-white min-h-screen shadow-2xl relative flex-col pb-20"
     >
       <!-- Header -->
       <header
-        class="bg-indigo-600 flex items-center justify-between text-white mb-1 px-9 py-2 rounded-3xl shadow-lg z-10"
+        class="bg-indigo-500 flex items-center justify-between text-white mb-1 px-9 py-2 rounded-3xl shadow-lg z-10"
       >
         <div class="flex justify-between items-center">
           <div class="flex items-center gap-2">
@@ -38,9 +38,9 @@
 
       <!-- Main Content -->
       <div
-        class="bg-white/20 px-4 py-1 rounded-full text-sm font-medium backdrop-blur-sm"
+        class="mx-4 px-2 py-1 rounded-full text-sm font-medium bg-gray-600/40"
       >
-        <span>Your Wallet Balance is:</span>
+        <span>Your Wallet Balance is :</span>
         ₹<span id="header-wallet">0.00</span>
       </div>
       <!-- <div
@@ -55,9 +55,9 @@
         <!-- Quick Action: Active Booking -->
         <div
           id="active-session-card"
-          class="bg-indigo-50 border border-indigo-100 p-4 rounded-xl shadow-sm relative overflow-hidden"
+          class="bg-indigo-200 border border-indigo-100 p-4 rounded-xl shadow-sm relative overflow-hidden"
         >
-          <div class="absolute top-0 right-0 p-3 opacity-10 text-6xl">⏱️</div>
+          <div class="absolute top-0 right-0 p-3 opacity-70 text-6xl">⏱️</div>
           <h3 class="text-indigo-900 font-bold text-lg mb-1">Active Session</h3>
           <p class="text-indigo-600 text-xs mb-3" id="active-status">
             View Active Booking and Reservation...
@@ -96,12 +96,12 @@
           </a>
         </div>
         <!-- Vehicles -->
-        <div class="mx-3">
+        <div class="mx-0 px-4 py-7 rounded-2xl bg-gray-400">
           <div class="flex justify-between items-center mb-3">
             <h3 class="font-bold text-gray-900 text-sm">My Vehicles</h3>
             <a
               href="vehicle-register.html"
-              class="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded font-bold"
+              class="text-xs bg-indigo-700 text-white px-2 py-1 rounded font-bold"
               >+ Add</a
             >
           </div>
@@ -112,10 +112,10 @@
       </div>
 
       <div
-        class="h-96 p-3 m-1 overflow-auto border-2 border-gray-600 rounded-3xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        class="h-96 p-3 m-1 overflow-auto border-2 border-gray-600 bg-gray-300 rounded-3xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <!-- HISTORY SECTION -->
-        <div class="mt-0 border-t border-gray-200 pt-6">
+        <div class="mt-0 border-t border-gray-600 bg-gray-300 pt-6">
           <h2 class="text-lg font-bold text-gray-800 mb-4 px-2">History</h2>
 
           <div
@@ -534,7 +534,7 @@
 
           if (isCompleted) {
             const totalFee = fResFee + fParkFee;
-            amountDisplay = `<span class="font-bold text-gray-800">₹${totalFee.toFixed(
+            amountDisplay = `<span class="font-bold text-gray-950">₹${totalFee.toFixed(
               2
             )}</span>`;
           } else if (
@@ -549,7 +549,7 @@
               amountDisplay = `<span class="font-bold text-red-600">Pending: ₹${amtPending.toFixed(
                 2
               )}</span>`;
-              noteDisplay = `<div class="mt-2 text-[10px] text-amber-600 bg-amber-50 p-2 rounded border border-amber-100">
+              noteDisplay = `<div class="mt-2 text-[12px] text-amber-950 bg-amber-50 p-2 rounded border border-amber-100">
                               ⚠️ Debt added. Will be deducted in next booking.
                           </div>`;
             }
@@ -566,14 +566,14 @@
                             b.id
                           })">
                               <div class="flex items-center gap-3">
-                                  <div class="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold ${statusColor}">
+                                  <div class="h-8 w-8 rounded-full flex items-center justify-center text-md font-bold ${statusColor}">
                                       ${amtPending > 0 ? "✕" : "✓"}
                                   </div>
                                   <div>
-                                      <h4 class="text-sm font-bold text-gray-800">${
+                                      <h4 class="text-sm font-bold text-gray-950">${
                                         b.areaName || "Unknown"
                                       }</h4>
-                                      <div class="text-[10px] text-gray-500">${new Date(
+                                      <div class="text-[12px] text-gray-950">${new Date(
                                         displayTime
                                       ).toLocaleDateString()}</div>
                                   </div>
@@ -592,18 +592,18 @@
                           <!-- Details Row -->
                           <div id="hist-det-${
                             b.id
-                          }" class="hidden bg-gray-50 p-4 border-t border-gray-100 text-xs text-gray-600">
+                          }" class="hidden bg-gray-50 p-4 border-t border-gray-100 text-sm text-gray-950">
                               <div class="grid grid-cols-2 gap-2 mb-3">
-                                  <div><span class="block text-gray-400 text-[10px]">Vehicle</span>${
+                                  <div><span class="block text-gray-950 text-[10px]">Vehicle</span>${
                                     b.vehicleNumber || "--"
                                   }</div>
-                                  <div><span class="block text-gray-400 text-[10px]">Slot</span>${
+                                  <div><span class="block text-gray-950 text-[10px]">Slot</span>${
                                     b.slotNumber || "--"
                                   }</div>
-                                  <div><span class="block text-gray-400 text-[10px]">Reservation Fee</span>₹${fResFee.toFixed(
+                                  <div><span class="block text-gray-950 text-[10px]">Reservation Fee</span>₹${fResFee.toFixed(
                                     2
                                   )}</div>
-                                  <div><span class="block text-gray-400 text-[10px]">Parking Fee</span>₹${fParkFee.toFixed(
+                                  <div><span class="block text-gray-950 text-[10px]">Parking Fee</span>₹${fParkFee.toFixed(
                                     2
                                   )}</div>
                               </div>

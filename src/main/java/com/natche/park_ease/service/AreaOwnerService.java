@@ -1,9 +1,11 @@
 package com.natche.park_ease.service;
 
 import com.natche.park_ease.dto.CreateParkingAreaRequest;
+import com.natche.park_ease.dto.CreateSlotRequest;
 import com.natche.park_ease.dto.GuardRegisterRequest;
 import com.natche.park_ease.dto.SlotUpdateRequest;
 import com.natche.park_ease.dto.UpdateParkingAreaRequest;
+import com.natche.park_ease.dto.response.AreaBookingLogDto;
 import com.natche.park_ease.dto.response.AreaStatisticsDto;
 import com.natche.park_ease.dto.response.GuardDto;
 import com.natche.park_ease.entity.Booking;
@@ -646,6 +648,72 @@ public List<ParkingArea> getAreasByOwner(String ownerEmail) {
                 .totalReservationHours(Math.round(resHours * 100.0) / 100.0) // Round to 2 decimals
                 .totalParkingHours(Math.round(parkHours * 100.0) / 100.0)
                 .build();
+    }
+
+
+    
+    @Transactional
+    public void addSlotToArea(Long areaId, CreateSlotRequest request, String ownerEmail) {
+        // 1. Verify Ownership
+        User loggedInOwner = userRepository.findByEmailOrPhone(ownerEmail, ownerEmail).orElseThrow();
+        ParkingArea area = parkingAreaRepository.findById(areaId)
+                .orElseThrow(() -> new RuntimeException("Area not found"));
+
+        if (loggedInOwner.getRole() != UserRole.ADMIN && 
+            !Objects.equals(area.getAreaOwner().getUserId(), loggedInOwner.getUserId())) {
+            throw new RuntimeException("Access Denied: You do not own this area.");
+        }
+
+        // 2. Validate Inputs
+        if (request.getSlotNumber() == null || request.getSlotNumber().isBlank()) 
+            throw new RuntimeException("Slot Number is required");
+        if (request.getBaseHourlyRate() == null || request.getBaseHourlyRate() <= 0) 
+            throw new RuntimeException("Valid Hourly Rate is required");
+
+        // 3. Create Slot
+        ParkingSlot slot = new ParkingSlot();
+        slot.setParkingArea(area);
+        slot.setSlotNumber(request.getSlotNumber());
+        slot.setFloor(request.getFloor() != null ? request.getFloor() : 0);
+        slot.setSupportedVehicleType(request.getSupportedVehicleType());
+        slot.setBaseHourlyRate(request.getBaseHourlyRate());
+        
+        // Default to MAINTENANCE as requested
+        slot.setStatus(ParkingSlotStatus.MAINTENANCE); 
+
+        parkingSlotRepository.save(slot);
+        
+        // Optional: Update Area Capacity counters if you want strict tracking
+        // if (request.getSupportedVehicleType() == VehicleType.SMALL) area.setCapacitySmall(area.getCapacitySmall() + 1);
+        // ... (save area)
+    }
+
+
+    // ==========================================
+    // 8. GET BOOKING LOGS (History)
+    // ==========================================
+    public List<AreaBookingLogDto> getAreaBookingLogs(Long areaId, String ownerEmail) {
+        User loggedInOwner = userRepository.findByEmailOrPhone(ownerEmail, ownerEmail).orElseThrow();
+        ParkingArea area = parkingAreaRepository.findById(areaId).orElseThrow(() -> new RuntimeException("Area not found"));
+
+        if (loggedInOwner.getRole() != UserRole.ADMIN && 
+            !Objects.equals(area.getAreaOwner().getUserId(), loggedInOwner.getUserId())) {
+            throw new RuntimeException("Access Denied");
+        }
+
+        List<Booking> bookings = bookingRepository.findByArea_AreaId(areaId);
+
+        return bookings.stream()
+                // Sort by Time Descending (Newest first)
+                .sorted((a, b) -> {
+                    LocalDateTime t1 = a.getBookingTime() != null ? a.getBookingTime() : a.getReservationTime();
+                    LocalDateTime t2 = b.getBookingTime() != null ? b.getBookingTime() : b.getReservationTime();
+                    if(t1 == null) return 1;
+                    if(t2 == null) return -1;
+                    return t2.compareTo(t1); 
+                })
+                .map(AreaBookingLogDto::fromEntity)
+                .collect(Collectors.toList());
     }
 
 

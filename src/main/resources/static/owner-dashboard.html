@@ -24,7 +24,7 @@
       }
     </style>
   </head>
-  <body class="bg-gray-50 min-h-screen">
+  <body class="bg-gray-800 min-h-screen">
     <!-- Header -->
     <header class="bg-amber-900 text-white shadow-lg sticky top-0 z-50">
       <div
@@ -117,13 +117,7 @@
                 >
                   Slots & Config
                 </button>
-                <button
-                  onclick="switchTab('guards')"
-                  id="tab-guards"
-                  class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm shrink-0"
-                >
-                  Guard Staffing
-                </button>
+
                 <button
                   onclick="switchTab('stats')"
                   id="tab-stats"
@@ -131,6 +125,22 @@
                 >
                   Analytics
                 </button>
+                <button
+                  onclick="switchTab('logs')"
+                  id="tab-logs"
+                  class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm shrink-0"
+                >
+                  Logs
+                </button>
+
+                <button
+                  onclick="switchTab('guards')"
+                  id="tab-guards"
+                  class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm shrink-0"
+                >
+                  Guard Staffing
+                </button>
+                <!-- NEW TAB -->
               </nav>
             </div>
 
@@ -145,12 +155,21 @@
                   <h3 class="text-xs font-bold text-gray-500 uppercase">
                     Live Slot Grid
                   </h3>
-                  <button
-                    onclick="makeAllAvailable()"
-                    class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded shadow font-bold"
-                  >
-                    ✓ Make Maintenance Available
-                  </button>
+                  <!-- NEW: Add Single Slot Button -->
+                  <div>
+                    <button
+                      onclick="toggleCreateSlot()"
+                      class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded shadow font-bold"
+                    >
+                      + Add Slot
+                    </button>
+                    <button
+                      onclick="makeAllAvailable()"
+                      class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded shadow font-bold"
+                    >
+                      ✓ Make All Available
+                    </button>
+                  </div>
                 </div>
 
                 <!-- Grid Container -->
@@ -303,6 +322,65 @@
                 </div>
               </div>
             </div>
+
+            <!-- TAB: LOGS (NEW) -->
+            <div id="view-logs" class="hidden">
+              <div
+                class="bg-white rounded-lg border border-gray-200 overflow-hidden"
+              >
+                <div class="overflow-x-auto">
+                  <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th
+                          class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase"
+                        >
+                          ID
+                        </th>
+                        <th
+                          class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase"
+                        >
+                          Date/Time
+                        </th>
+                        <th
+                          class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase"
+                        >
+                          User
+                        </th>
+                        <th
+                          class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase"
+                        >
+                          Vehicle
+                        </th>
+                        <th
+                          class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase"
+                        >
+                          Status
+                        </th>
+                        <th
+                          class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase"
+                        >
+                          Amount
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody
+                      id="logs-table-body"
+                      class="bg-white divide-y divide-gray-200"
+                    >
+                      <tr>
+                        <td
+                          colspan="6"
+                          class="px-4 py-8 text-center text-xs text-gray-400"
+                        >
+                          Loading logs...
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -321,12 +399,12 @@
             </h2>
             <button
               onclick="toggleCreateArea()"
-              class="text-gray-400 hover:text-gray-600"
+              class="text-gray-950 hover:text-gray-600"
             >
               ✕
             </button>
           </div>
-          <form onsubmit="createArea(event)" class="space-y-3">
+          <form onsubmit="createArea(event)" class="space-y-6">
             <input
               id="ca-name"
               class="w-full border p-2 rounded text-sm focus:ring-amber-500"
@@ -340,76 +418,170 @@
               required
             />
             <div class="grid grid-cols-2 gap-2">
-              <input
-                id="ca-lat"
-                class="border p-2 rounded text-sm"
-                placeholder="Latitude"
-                value="22.7"
-              />
-              <input
-                id="ca-lon"
-                class="border p-2 rounded text-sm"
-                placeholder="Longitude"
-                value="75.8"
-              />
+              <div>
+                <label for="" class="text-sm text-gray-700">Lattitude</label>
+                <input
+                  id="ca-lat"
+                  class="border p-2 rounded text-sm"
+                  placeholder="Latitude"
+                  value="22.7"
+                />
+              </div>
+              <div>
+                <label for="" class="text-sm text-gray-700">Longitude</label>
+                <input
+                  id="ca-lon"
+                  class="border p-2 rounded text-sm"
+                  placeholder="Longitude"
+                  value="75.8"
+                />
+              </div>
             </div>
-            <label class="block text-xs font-bold text-gray-500 mt-2"
-              >Capacity</label
-            >
-            <div class="grid grid-cols-3 gap-2">
-              <input
-                id="cap-s"
-                type="number"
-                class="border p-2 rounded text-sm"
-                placeholder="Small"
-                required
-              />
-              <input
-                id="cap-m"
-                type="number"
-                class="border p-2 rounded text-sm"
-                placeholder="Med"
-                required
-              />
-              <input
-                id="cap-l"
-                type="number"
-                class="border p-2 rounded text-sm"
-                placeholder="Large"
-                required
-              />
+            <div>
+              <label class="block text-xs font-bold text-gray-500 mt-2"
+                >Capacity</label
+              >
+              <div class="grid grid-cols-3 gap-2">
+                <input
+                  id="cap-s"
+                  type="number"
+                  class="border p-2 rounded text-sm"
+                  placeholder="Small"
+                  required
+                />
+                <input
+                  id="cap-m"
+                  type="number"
+                  class="border p-2 rounded text-sm"
+                  placeholder="Med"
+                  required
+                />
+                <input
+                  id="cap-l"
+                  type="number"
+                  class="border p-2 rounded text-sm"
+                  placeholder="Large"
+                  required
+                />
+              </div>
             </div>
-            <label class="block text-xs font-bold text-gray-500 mt-2"
-              >Hourly Rates (₹)</label
-            >
-            <div class="grid grid-cols-3 gap-2">
-              <input
-                id="rate-s"
-                type="number"
-                class="border p-2 rounded text-sm"
-                placeholder="Small"
-                required
-              />
-              <input
-                id="rate-m"
-                type="number"
-                class="border p-2 rounded text-sm"
-                placeholder="Med"
-                required
-              />
-              <input
-                id="rate-l"
-                type="number"
-                class="border p-2 rounded text-sm"
-                placeholder="Large"
-                required
-              />
+
+            <div>
+              <label class="block text-xs font-bold text-gray-500 mt-2"
+                >Hourly Rates (₹)</label
+              >
+              <div class="grid grid-cols-3 gap-2">
+                <input
+                  id="rate-s"
+                  type="number"
+                  class="border p-2 rounded text-sm"
+                  placeholder="Small"
+                  required
+                />
+                <input
+                  id="rate-m"
+                  type="number"
+                  class="border p-2 rounded text-sm"
+                  placeholder="Med"
+                  required
+                />
+                <input
+                  id="rate-l"
+                  type="number"
+                  class="border p-2 rounded text-sm"
+                  placeholder="Large"
+                  required
+                />
+              </div>
             </div>
             <button
               type="submit"
               class="w-full bg-amber-600 text-white font-bold py-3 rounded mt-4 hover:bg-amber-700 shadow-md"
             >
               Create & Generate Slots
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- MODAL: CREATE SINGLE SLOT (NEW) -->
+      <div
+        id="modal-create-slot"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm"
+      >
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-bold text-gray-900">Add New Slot</h2>
+            <button
+              onclick="toggleCreateSlot()"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+          </div>
+
+          <form onsubmit="createNewSlot(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-gray-500 mb-1"
+                >Slot Name/Number</label
+              >
+              <input
+                type="text"
+                id="new-slot-name"
+                class="w-full border p-2 rounded text-sm focus:ring-indigo-500"
+                placeholder="e.g. B2-505"
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-500 mb-1"
+                >Floor</label
+              >
+              <input
+                type="number"
+                id="new-slot-floor"
+                class="w-full border p-2 rounded text-sm"
+                placeholder="0"
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-500 mb-1"
+                >Vehicle Type</label
+              >
+              <select
+                id="new-slot-type"
+                class="w-full border p-2 rounded text-sm bg-white"
+              >
+                <option value="SMALL">Small (Bike)</option>
+                <option value="MEDIUM" selected>Medium (Car)</option>
+                <option value="LARGE">Large (SUV)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-500 mb-1"
+                >Hourly Rate (₹)</label
+              >
+              <input
+                type="number"
+                id="new-slot-rate"
+                class="w-full border p-2 rounded text-sm"
+                placeholder="50"
+                required
+              />
+            </div>
+
+            <div
+              class="bg-gray-100 p-2 rounded text-[10px] text-gray-500 italic text-center"
+            >
+              Note: New slots are created in MAINTENANCE mode by default.
+            </div>
+
+            <button
+              type="submit"
+              class="w-full bg-indigo-600 text-white font-bold py-2 rounded hover:bg-indigo-700 shadow-md"
+            >
+              Create Slot
             </button>
           </form>
         </div>
@@ -562,6 +734,97 @@
         }
       }
 
+      function toggleCreateSlot() {
+        document.getElementById("modal-create-slot").classList.toggle("hidden");
+      }
+
+      async function createNewSlot(e) {
+        e.preventDefault();
+        if (!selectedAreaId) return;
+
+        const payload = {
+          slotNumber: document.getElementById("new-slot-name").value,
+          floor: parseInt(document.getElementById("new-slot-floor").value),
+          supportedVehicleType: document.getElementById("new-slot-type").value,
+          baseHourlyRate: parseFloat(
+            document.getElementById("new-slot-rate").value
+          ),
+        };
+
+        try {
+          const res = await fetchAPI(
+            `/area-owner/area/${selectedAreaId}/slots/create`,
+            "POST",
+            payload
+          );
+          alert(res.message);
+          toggleCreateSlot();
+          loadSlots(selectedAreaId);
+        } catch (err) {
+          alert("Error: " + err.message);
+        }
+      }
+
+      // --- NEW: LOGS ---
+      async function loadLogs(id) {
+        const tbody = document.getElementById("logs-table-body");
+        tbody.innerHTML =
+          '<tr><td colspan="6" class="px-4 py-8 text-center text-xs text-gray-400">Loading...</td></tr>';
+        try {
+          const logs = await fetchAPI(`/area-owner/area/${id}/logs`);
+          tbody.innerHTML = "";
+
+          if (!logs.length) {
+            tbody.innerHTML =
+              '<tr><td colspan="6" class="px-4 py-8 text-center text-xs text-gray-400">No logs found.</td></tr>';
+            return;
+          }
+
+          logs.forEach((log) => {
+            let statusColor = "text-gray-500";
+            if (log.status === "COMPLETED") statusColor = "text-green-600";
+            if (log.status === "CANCELLED_NO_SHOW")
+              statusColor = "text-red-500";
+            if (log.status === "RESERVED" || log.status === "ACTIVE_PARKING")
+              statusColor = "text-amber-600";
+
+            const dateStr = new Date(log.time).toLocaleString([], {
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+
+            tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2 text-xs font-mono text-gray-500">#${
+                          log.bookingId
+                        }</td>
+                        <td class="px-4 py-2 text-xs text-gray-600">${dateStr}</td>
+                        <td class="px-4 py-2 text-xs text-gray-800 font-bold">${
+                          log.userName
+                        }<br><span class="font-normal text-gray-400">${
+              log.userPhone
+            }</span></td>
+                        <td class="px-4 py-2 text-xs text-gray-600 font-mono">${
+                          log.vehicleNumber
+                        }</td>
+                        <td class="px-4 py-2 text-xs font-bold ${statusColor}">${log.status.replace(
+              "_",
+              " "
+            )}<br><span class="text-gray-400 font-normal">Slot: ${
+              log.slotNumber
+            }</span></td>
+                        <td class="px-4 py-2 text-xs text-right font-mono font-bold text-gray-800">₹${log.amount.toFixed(
+                          2
+                        )}</td>
+                    </tr>`;
+          });
+        } catch (err) {
+          tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-xs text-red-500">Error: ${err.message}</td></tr>`;
+        }
+      }
+
       async function createArea(e) {
         e.preventDefault();
         const payload = {
@@ -611,6 +874,7 @@
         loadSlots(id);
         loadGuards(id);
         loadStats(id);
+        loadLogs(id);
       }
 
       // function switchTab(tab) {
@@ -633,7 +897,7 @@
       // }
 
       function switchTab(tab) {
-        const views = ["slots", "guards", "stats"];
+        const views = ["slots", "guards", "stats", "logs"];
         views.forEach((v) => {
           const el = document.getElementById(`view-${v}`);
           const btn = document.getElementById(`tab-${v}`);

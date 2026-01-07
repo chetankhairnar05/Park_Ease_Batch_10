@@ -24,7 +24,7 @@
       }
     </style>
   </head>
-  <body class="bg-gray-100 min-h-screen flex justify-center">
+  <body class="bg-gray-800 min-h-screen flex justify-center">
     <div
       class="w-full max-w-md bg-white min-h-screen shadow-2xl relative flex flex-col pb-20"
     >
@@ -59,7 +59,7 @@
 
       <!-- Results List -->
       <div
-        class="flex-1 bg-gray-50 p-4 overflow-y-auto rounded-t-3xl -mt-4 relative z-10"
+        class="flex-1 bg-gray-600 p-4 overflow-y-auto rounded-t-3xl -mt-4 relative z-10"
       >
         <div class="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
 
@@ -289,24 +289,24 @@
             container.innerHTML += `
                     <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                         <div class="flex justify-between mb-1">
-                            <h3 class="font-bold text-gray-800 text-sm truncate w-3/4">${
+                            <h3 class="font-black text-gray-800 text-base truncate w-3/4">${
                               area.name
                             }</h3>
-                            <span class="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">${
+                            <span class="text-md bg-indigo-900 text-white px-2 py-0.5 rounded-full font-black">${
                               area.distanceKm
                             }km</span>
                         </div>
-                        <p class="text-xs text-gray-400 mb-3 truncate">${
+                        <p class="text-md text-gray-800 mb-3 truncate">${
                           area.address || "No Address"
                         }</p>
                         <div class="flex gap-2 mb-3 text-center">
-                            <div class="flex-1 bg-gray-50 rounded p-1"><div class="text-[10px] text-gray-400">S</div><div class="text-xs font-bold">${
+                            <div class="flex-1 bg-gray-200 rounded p-1"><div class="text-[20px] text-gray-900">S</div><div class="text-md font-bold">${
                               area.availableSmall
                             }</div></div>
-                            <div class="flex-1 bg-gray-50 rounded p-1"><div class="text-[10px] text-gray-400">M</div><div class="text-xs font-bold">${
+                            <div class="flex-1 bg-gray-200 rounded p-1"><div class="text-[20px] text-gray-900">M</div><div class="text-md font-bold">${
                               area.availableMedium
                             }</div></div>
-                            <div class="flex-1 bg-gray-50 rounded p-1"><div class="text-[10px] text-gray-400">L</div><div class="text-xs font-bold">${
+                            <div class="flex-1 bg-gray-200 rounded p-1"><div class="text-[20px] text-gray-900">L</div><div class="text-md font-bold">${
                               area.availableLarge
                             }</div></div>
                         </div>
@@ -358,11 +358,8 @@
 
             grid.innerHTML += `
                     <div ${action} class="border rounded p-1 text-center ${color}">
-                        <div class="text-[10px] font-bold">${s.slotNumber}</div>
-                        <div class="text-[8px] opacity-70">${s.status.substring(
-                          0,
-                          3
-                        )}</div>
+                        <div class="text-[13px] font-bold">${s.slotNumber}</div>
+                        <div class="text-[10px] ">${s.status}</div>
                     </div>`;
           });
         } catch (e) {

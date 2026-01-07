@@ -15,7 +15,7 @@
       }
     </style>
   </head>
-  <body class="bg-gray-100 min-h-screen flex justify-center">
+  <body class="bg-gray-900 min-h-screen flex justify-center">
     <div
       class="w-full max-w-md bg-white min-h-screen shadow-2xl relative flex flex-col pb-20"
     >
@@ -26,9 +26,9 @@
 
       <div class="p-6 space-y-8 overflow-y-auto flex-1">
         <!-- User Info -->
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-4 bg-gray-200 py-2 px-2 rounded-3xl">
           <div
-            class="h-14 w-14 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-2xl font-bold border-2 border-indigo-50"
+            class="h-14 w-14 bg-indigo-300 text-indigo-900 rounded-full flex items-center justify-center text-2xl font-bold border-2 border-indigo-50"
           >
             <span id="p-initial">U</span>
           </div>
@@ -39,11 +39,11 @@
             >
               Loading...
             </h2>
-            <p id="p-email" class="text-sm text-gray-500">...</p>
-            <p id="p-phone" class="text-sm text-gray-500">...</p>
+            <p id="p-email" class="text-sm font-bold text-gray-900">...</p>
+            <p id="p-phone" class="text-sm font-bold text-gray-900">...</p>
             <span
               id="p-role"
-              class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-bold uppercase mt-1 inline-block"
+              class="text-[13px] bg-gray-300 text-gray-900 px-2 py-0.5 rounded font-bold uppercase mt-1 inline-block"
               >DRIVER</span
             >
           </div>
@@ -74,22 +74,26 @@
         </div>
 
         <!-- Location -->
-        <div class="only-driver">
-          <h3 class="font-bold text-gray-900 text-sm mb-3">
-            Location Settings
-          </h3>
+        <div class="only-driver bg-gray-300 px-3 py-3 rounded-2xl">
+          <h3 class="font-bold text-black text-sm mb-3">Location Settings</h3>
           <div class="space-y-2">
             <div class="flex gap-2">
-              <input
-                id="loc-lat"
-                class="bg-gray-50 border border-gray-200 rounded text-xs p-2 w-full"
-                placeholder="Latitude"
-              />
-              <input
-                id="loc-lon"
-                class="bg-gray-50 border border-gray-200 rounded text-xs p-2 w-full"
-                placeholder="Longitude"
-              />
+              <div>
+                <label class="font-bold text-xs">Lattitude</label>
+                <input
+                  id="loc-lat"
+                  class="bg-gray-50 border border-gray-200 rounded text-xs p-2 w-full"
+                  placeholder="Latitude"
+                />
+              </div>
+              <div>
+                <label class="font-bold text-xs">Longitude</label>
+                <input
+                  id="loc-lon"
+                  class="bg-gray-50 border border-gray-200 rounded text-xs p-2 w-full"
+                  placeholder="Longitude"
+                />
+              </div>
             </div>
             <div class="flex gap-2">
               <button
@@ -100,7 +104,7 @@
               </button>
               <button
                 onclick="geoLocate()"
-                class="flex-1 text-indigo-600 text-xs font-bold hover:underline"
+                class="flex-1 text-indigo-600 text-md font-extrabold underline"
               >
                 Auto-Detect GPS
               </button>
@@ -109,7 +113,7 @@
         </div>
 
         <!-- Vehicles -->
-        <div class="only-driver">
+        <div class="only-driver bg-gray-400 px-3 py-4 rounded-2xl">
           <div class="flex justify-between items-center mb-3">
             <h3 class="font-bold text-gray-900 text-sm">My Vehicles</h3>
             <a
@@ -125,7 +129,7 @@
 
         <button
           onclick="logout()"
-          class="w-full text-red-500 text-sm font-bold border border-red-100 bg-red-50 py-3 rounded-xl hover:bg-red-100"
+          class="w-full text-red-950 text-sm font-bold border border-red-300 bg-red-300 py-3 rounded-xl hover:bg-red-200"
         >
           Sign Out
         </button>

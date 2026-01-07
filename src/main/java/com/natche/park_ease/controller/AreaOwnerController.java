@@ -4,8 +4,10 @@ area owner can recruit and fire guards, create parking areas, disable areas for 
 */
 
 import com.natche.park_ease.dto.CreateParkingAreaRequest;
+import com.natche.park_ease.dto.CreateSlotRequest;
 import com.natche.park_ease.dto.GuardRegisterRequest;
 import com.natche.park_ease.dto.SlotUpdateRequest;
+import com.natche.park_ease.dto.response.AreaBookingLogDto;
 import com.natche.park_ease.dto.response.GuardDto;
 import com.natche.park_ease.dto.response.ParkingAreaDto;
 import com.natche.park_ease.entity.ParkingArea;
@@ -135,6 +137,28 @@ public class AreaOwnerController {
     public ResponseEntity<?> getAreaStats(@PathVariable Long areaId, Principal principal) {
         try {
             return ResponseEntity.ok(areaOwnerService.getAreaStatistics(areaId, principal.getName()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/area/{areaId}/slots/create")
+    @PreAuthorize("hasRole('AREA_OWNER') or hasRole('ADMIN')")
+    public ResponseEntity<?> addSlot(@PathVariable Long areaId, @RequestBody CreateSlotRequest request, Principal principal) {
+        try {
+            areaOwnerService.addSlotToArea(areaId, request, principal.getName());
+            return ResponseEntity.ok(Map.of("message", "Slot created successfully (Status: Maintenance)"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+        @GetMapping("/area/{areaId}/logs")
+    @PreAuthorize("hasRole('AREA_OWNER') or hasRole('ADMIN')")
+    public ResponseEntity<?> getAreaLogs(@PathVariable Long areaId, Principal principal) {
+        try {
+            List<AreaBookingLogDto> logs = areaOwnerService.getAreaBookingLogs(areaId, principal.getName());
+            return ResponseEntity.ok(logs);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
