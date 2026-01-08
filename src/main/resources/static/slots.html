@@ -29,7 +29,7 @@
       class="w-full max-w-md bg-white min-h-screen shadow-2xl relative flex flex-col pb-20"
     >
       <!-- Header -->
-      <header
+      <!-- <header
         class="bg-white p-4 shadow-sm z-20 flex justify-between items-center sticky top-0"
       >
         <h1 class="text-lg font-bold text-gray-800">Find Parking</h1>
@@ -52,8 +52,59 @@
           </svg>
           Refresh
         </button>
-      </header>
+      </header> -->
 
+      <!-- Header -->
+      <header class="bg-white p-3 shadow-sm z-20 sticky top-0">
+        <h1 class="font-bold text-gray-800 shrink-0 pl-3">Find Parking</h1>
+        <div class="flex gap-3 items-center">
+          <!-- Search Bar -->
+          <div class="flex-1 relative">
+            <input
+              type="text"
+              id="search-input"
+              onkeyup="filterParking()"
+              placeholder="Search area or address..."
+              class="w-full bg-gray-100 text-xs px-4 py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <div class="absolute right-3 top-2 text-gray-400">
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+          </div>
+
+          <button
+            onclick="findAllParking()"
+            class="text-xs bg-indigo-600 text-white px-3 py-2 rounded-full font-bold shadow hover:bg-indigo-700 flex items-center gap-1 shrink-0"
+          >
+            <svg
+              class="w-3 h-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            Refresh
+          </button>
+        </div>
+      </header>
       <!-- Map -->
       <div id="map" class="w-full h-[450px] bg-gray-200 z-0"></div>
 
@@ -190,7 +241,7 @@
       </div>
     </div>
 
-    <script>
+    <!-- <script>
       const API_BASE = "http://localhost:8080/api";
       const token = localStorage.getItem("parkease_token");
       if (!token) window.location.href = "auth.html";
@@ -361,6 +412,223 @@
                         <div class="text-[13px] font-bold">${s.slotNumber}</div>
                         <div class="text-[10px] ">${s.status}</div>
                     </div>`;
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      };
+
+      init();
+    </script> -->
+    <script>
+      const API_BASE = "http://localhost:8080/api";
+      const token = localStorage.getItem("parkease_token");
+      if (!token) window.location.href = "auth.html";
+
+      let map, markersGroup;
+
+      // Store all data here for searching
+      let allParkingData = [];
+
+      const blueIcon = new L.Icon({
+        iconUrl:
+          "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41],
+      });
+      const redIcon = new L.Icon({
+        iconUrl:
+          "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41],
+      });
+
+      async function init() {
+        try {
+          const user = await fetchAPI("/user/profile");
+          if (user.role !== "DRIVER") {
+            alert("Only DRIVER Route");
+            window.location.href = "dashboard.html";
+            return;
+          }
+          if (user.latitude && user.longitude) {
+            initMap(user.latitude, user.longitude);
+          } else {
+            initMap(22.7196, 75.8577);
+          }
+          findAllParking();
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      async function fetchAPI(endpoint) {
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+          headers: {
+            "Content-Type": "application/json",
+            "X-Auth-Token": token,
+          },
+        });
+        return res.json();
+      }
+
+      function initMap(lat, lon) {
+        map = L.map("map").setView([lat, lon], 13);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "OSM",
+        }).addTo(map);
+        markersGroup = L.layerGroup().addTo(map);
+        L.marker([lat, lon], { icon: blueIcon })
+          .addTo(map)
+          .bindPopup("You")
+          .openPopup();
+      }
+
+      async function findAllParking() {
+        const loader = document.getElementById("parking-loading");
+        loader.classList.remove("hidden");
+
+        try {
+          // 1. Fetch Data
+          const areas = await fetchAPI("/slots/all");
+          loader.classList.add("hidden");
+
+          if (!Array.isArray(areas)) return;
+
+          // 2. Store in global variable
+          allParkingData = areas;
+
+          // 3. Render everything initially
+          renderAreas(allParkingData);
+        } catch (e) {
+          console.error(e);
+          loader.innerText = "Error loading data";
+        }
+      }
+
+      // --- SEARCH FILTER FUNCTION ---
+      function filterParking() {
+        const query = document
+          .getElementById("search-input")
+          .value.toLowerCase();
+
+        // Split query into tokens (e.g. "MR 10" -> ["mr", "10"])
+        const tokens = query.split(" ").filter((t) => t.trim() !== "");
+
+        if (tokens.length === 0) {
+          renderAreas(allParkingData); // Show all if empty
+          return;
+        }
+
+        const filtered = allParkingData.filter((area) => {
+          const searchString = (area.name + " " + area.address).toLowerCase();
+          // Check if ALL tokens are present in the string
+          return tokens.every((token) => searchString.includes(token));
+        });
+
+        renderAreas(filtered);
+      }
+
+      // --- REUSABLE RENDER FUNCTION ---
+      function renderAreas(areasToRender) {
+        const container = document.getElementById("parking-results");
+        container.innerHTML = "";
+        container.classList.remove("hidden");
+
+        // Clear existing markers
+        if (markersGroup) markersGroup.clearLayers();
+
+        if (areasToRender.length === 0) {
+          container.innerHTML =
+            '<p class="text-center text-gray-400 text-sm">No matching parking found.</p>';
+          return;
+        }
+
+        areasToRender.forEach((area) => {
+          // 1. Add Marker
+          if (map && area.latitude && area.longitude) {
+            const marker = L.marker([area.latitude, area.longitude], {
+              icon: redIcon,
+            }).bindPopup(
+              `<b>${area.name}</b><br><button onclick="viewAreaSlots(${
+                area.areaId
+              }, '${area.name.replace(/'/g, "\\'")}', '${
+                area.distanceKm
+              }')" class="text-indigo-600 font-bold text-xs mt-1 underline">View Slots</button>`
+            );
+            markersGroup.addLayer(marker);
+          }
+
+          // 2. Add Card
+          container.innerHTML += `
+                <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                    <div class="flex justify-between mb-1">
+                        <h3 class="font-black text-gray-800 text-base truncate w-3/4">${
+                          area.name
+                        }</h3>
+                        <span class="text-xs bg-indigo-900 text-white px-2 py-0.5 rounded-full font-bold">${
+                          area.distanceKm
+                        }km</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3 truncate">${
+                      area.address || "No Address"
+                    }</p>
+                    <div class="flex gap-2 mb-3 text-center">
+                        <div class="flex-1 bg-gray-50 rounded p-1"><div class="text-[10px] text-gray-400">S</div><div class="text-xs font-bold text-gray-700">${
+                          area.availableSmall
+                        }</div></div>
+                        <div class="flex-1 bg-gray-50 rounded p-1"><div class="text-[10px] text-gray-400">M</div><div class="text-xs font-bold text-gray-700">${
+                          area.availableMedium
+                        }</div></div>
+                        <div class="flex-1 bg-gray-50 rounded p-1"><div class="text-[10px] text-gray-400">L</div><div class="text-xs font-bold text-gray-700">${
+                          area.availableLarge
+                        }</div></div>
+                    </div>
+                    <button onclick="viewAreaSlots(${
+                      area.areaId
+                    }, '${area.name.replace(/'/g, "\\'")}', '${
+            area.distanceKm
+          }')" class="w-full bg-gray-900 text-white text-xs font-bold py-2 rounded-lg hover:bg-black transition">View Slots</button>
+                </div>`;
+        });
+      }
+
+      // ... keep viewAreaSlots() and init() as they were ...
+      window.viewAreaSlots = async (id, name, dist) => {
+        const modal = document.getElementById("slots-modal");
+        const grid = document.getElementById("modal-slots-grid");
+        document.getElementById("modal-area-name").innerText = name;
+        document.getElementById("modal-area-dist").innerText = `${dist} km`;
+        grid.innerHTML =
+          '<div class="col-span-full text-center py-4 text-gray-400 text-xs">Loading...</div>';
+        modal.classList.remove("hidden");
+        try {
+          const slots = await fetchAPI(`/slots/area/${id}`);
+          if (!slots.length) {
+            grid.innerHTML =
+              '<div class="col-span-full text-center py-4 text-gray-400 text-xs">No slots available.</div>';
+            return;
+          }
+          grid.innerHTML = "";
+          slots.forEach((s) => {
+            let color =
+              "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed";
+            let action = "";
+            if (s.status === "AVAILABLE") {
+              color =
+                "bg-green-50 text-green-700 border-green-200 cursor-pointer hover:bg-green-100";
+              action = `onclick="location.href='booking.html?slotId=${s.slotId}&areaId=${id}'"`;
+            } else if (s.status === "OCCUPIED")
+              color =
+                "bg-red-50 text-red-300 border-red-100 cursor-not-allowed";
+            else if (s.status === "RESERVED")
+              color =
+                "bg-yellow-50 text-yellow-600 border-yellow-100 cursor-not-allowed";
+            grid.innerHTML += `<div ${action} class="border rounded p-1 text-center ${color}"><div class="text-[13px] font-bold">${s.slotNumber}</div><div class="text-[10px] ">${s.status}</div></div>`;
           });
         } catch (e) {
           console.error(e);

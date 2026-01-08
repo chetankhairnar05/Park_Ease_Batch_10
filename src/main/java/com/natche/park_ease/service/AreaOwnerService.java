@@ -7,7 +7,9 @@ import com.natche.park_ease.dto.SlotUpdateRequest;
 import com.natche.park_ease.dto.UpdateParkingAreaRequest;
 import com.natche.park_ease.dto.response.AreaBookingLogDto;
 import com.natche.park_ease.dto.response.AreaStatisticsDto;
+import com.natche.park_ease.dto.response.FullAnalyticsResponse;
 import com.natche.park_ease.dto.response.GuardDto;
+import com.natche.park_ease.dto.response.SlotAnalyticsDto;
 import com.natche.park_ease.entity.Booking;
 import com.natche.park_ease.entity.Guard;
 import com.natche.park_ease.entity.ParkingArea;
@@ -713,6 +715,78 @@ public List<ParkingArea> getAreasByOwner(String ownerEmail) {
                     return t2.compareTo(t1); 
                 })
                 .map(AreaBookingLogDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public FullAnalyticsResponse getSlotAnalytics(Long areaId, String ownerEmail) {
+        // 1. Verify Access
+        User loggedInOwner = userRepository.findByEmailOrPhone(ownerEmail, ownerEmail).orElseThrow();
+        ParkingArea area = parkingAreaRepository.findById(areaId).orElseThrow(() -> new RuntimeException("Area not found"));
+
+        if (loggedInOwner.getRole() != UserRole.ADMIN && 
+            !Objects.equals(area.getAreaOwner().getUserId(), loggedInOwner.getUserId())) {
+            throw new RuntimeException("Access Denied");
+        }
+
+        // 2. Fetch All Bookings
+        List<Booking> allBookings = bookingRepository.findByArea_AreaId(areaId);
+        LocalDateTime now = LocalDateTime.now();
+
+        // 3. Filter Lists
+        List<Booking> list24h = allBookings.stream()
+                .filter(b -> b.getBookingTime() != null && b.getBookingTime().isAfter(now.minusHours(24)))
+                .collect(Collectors.toList());
+
+        List<Booking> list30d = allBookings.stream()
+                .filter(b -> b.getBookingTime() != null && b.getBookingTime().isAfter(now.minusDays(30)))
+                .collect(Collectors.toList());
+
+        // 4. Build Response
+        return FullAnalyticsResponse.builder()
+                .topRevenue24h(aggregateTopSlots(list24h, true))
+                .topTime24h(aggregateTopSlots(list24h, false))
+                .topRevenue30d(aggregateTopSlots(list30d, true))
+                .topTime30d(aggregateTopSlots(list30d, false))
+                .build();
+    }
+
+    // Helper to Group, Sum, and Sort
+    private List<SlotAnalyticsDto> aggregateTopSlots(List<Booking> bookings, boolean isRevenue) {
+        Map<String, SlotAnalyticsDto> map = new HashMap<>();
+
+        for (Booking b : bookings) {
+            if (b.getSlot() == null) continue;
+            String slotNum = b.getSlot().getSlotNumber();
+            
+            map.putIfAbsent(slotNum, SlotAnalyticsDto.builder()
+                    .slotNumber(slotNum).value(0.0).bookingCount(0L).build());
+
+            SlotAnalyticsDto dto = map.get(slotNum);
+            dto.setBookingCount(dto.getBookingCount() + 1);
+
+            if (isRevenue) {
+                // Sum Paid + Pending
+                double amt = (b.getAmountPaid() != null ? b.getAmountPaid() : 0) + 
+                             (b.getAmountPending() != null ? b.getAmountPending() : 0);
+                dto.setValue(dto.getValue() + amt);
+            } else {
+                // Sum Hours (Reservation + Parking)
+                double hours = 0;
+                // ... (Reuse time calculation logic from getAreaStatistics or simplify) ...
+                // Simplified Time Calc for Stats:
+                if (b.getReservationTime() != null && b.getArrivalTime() != null) {
+                    hours += Duration.between(b.getReservationTime(), b.getArrivalTime()).toMinutes() / 60.0;
+                }
+                if (b.getArrivalTime() != null && b.getDepartureTime() != null) {
+                    hours += Duration.between(b.getArrivalTime(), b.getDepartureTime()).toMinutes() / 60.0;
+                }
+                dto.setValue(dto.getValue() + hours);
+            }
+        }
+
+        return map.values().stream()
+                .sorted(Comparator.comparing(SlotAnalyticsDto::getValue).reversed())
+                .limit(5) // Top 5
                 .collect(Collectors.toList());
     }
 

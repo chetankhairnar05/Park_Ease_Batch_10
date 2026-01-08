@@ -163,5 +163,15 @@ public class AreaOwnerController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    @GetMapping("/area/{areaId}/analytics/slots")
+    @PreAuthorize("hasRole('AREA_OWNER') or hasRole('ADMIN')")
+    public ResponseEntity<?> getSlotPerformance(@PathVariable Long areaId, Principal principal) {
+        try {
+            return ResponseEntity.ok(areaOwnerService.getSlotAnalytics(areaId, principal.getName()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
     
 }

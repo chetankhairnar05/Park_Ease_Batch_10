@@ -23,6 +23,7 @@
         opacity: 0.7;
       }
     </style>
+    <script src="js/export-utils.js"></script>
   </head>
   <body class="bg-gray-800 min-h-screen">
     <!-- Header -->
@@ -237,9 +238,9 @@
             </div>
 
             <!-- TAB: ANALYTICS -->
-            <div id="view-stats" class="hidden">
+            <!-- <div id="view-stats" class="hidden">
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <!-- Money Cards -->
+                
                 <div class="bg-green-50 p-4 rounded-xl border border-green-100">
                   <p class="text-xs text-green-600 uppercase font-bold">
                     Total Earnings
@@ -277,7 +278,7 @@
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Breakdown -->
+                
                 <div class="bg-white border rounded-xl p-4">
                   <h4
                     class="text-sm font-bold text-gray-700 mb-3 border-b pb-2"
@@ -296,7 +297,154 @@
                   </div>
                 </div>
 
-                <!-- Engagement -->
+                <div class="bg-white border rounded-xl p-4">
+                  <h4
+                    class="text-sm font-bold text-gray-700 mb-3 border-b pb-2"
+                  >
+                    Engagement & Time
+                  </h4>
+                  <div class="flex justify-between text-xs mb-2">
+                    <span>Unique Users</span
+                    ><span id="st-users" class="font-bold">0</span>
+                  </div>
+                  <div class="flex justify-between text-xs mb-2">
+                    <span>Unique Vehicles</span
+                    ><span id="st-vehicles" class="font-bold">0</span>
+                  </div>
+                  <div class="flex justify-between text-xs mb-2">
+                    <span>Reservation Hours</span
+                    ><span id="st-res-hrs" class="font-bold">0</span>
+                  </div>
+                  <div class="flex justify-between text-xs mb-2">
+                    <span>Parking Hours</span
+                    ><span id="st-park-hrs" class="font-bold">0</span>
+                  </div>
+                </div>
+               
+                <div class="mt-8 border-t border-gray-200 pt-6">
+                  <h3 class="text-lg font-bold text-gray-800 mb-4">
+                    Top Performing Slots
+                  </h3>
+
+                
+                  <h4 class="text-xs font-bold text-indigo-600 uppercase mb-2">
+                    Last 24 Hours
+                  </h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+         
+                    <div class="bg-white border rounded-lg">
+                      <div
+                        class="bg-gray-50 px-4 py-2 border-b text-xs font-bold text-gray-600"
+                      >
+                        Top Revenue
+                      </div>
+                      <table class="min-w-full divide-y divide-gray-100">
+                        <tbody id="table-rev-24" class="text-xs"></tbody>
+                      </table>
+                    </div>
+                   
+                    <div class="bg-white border rounded-lg">
+                      <div
+                        class="bg-gray-50 px-4 py-2 border-b text-xs font-bold text-gray-600"
+                      >
+                        Top Occupancy Time
+                      </div>
+                      <table class="min-w-full divide-y divide-gray-100">
+                        <tbody id="table-time-24" class="text-xs"></tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                 
+                  <h4 class="text-xs font-bold text-purple-600 uppercase mb-2">
+                    Last 30 Days
+                  </h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  
+                    <div class="bg-white border rounded-lg">
+                      <div
+                        class="bg-gray-50 px-4 py-2 border-b text-xs font-bold text-gray-600"
+                      >
+                        Top Revenue
+                      </div>
+                      <table class="min-w-full divide-y divide-gray-100">
+                        <tbody id="table-rev-30" class="text-xs"></tbody>
+                      </table>
+                    </div>
+                    
+                    <div class="bg-white border rounded-lg">
+                      <div
+                        class="bg-gray-50 px-4 py-2 border-b text-xs font-bold text-gray-600"
+                      >
+                        Top Occupancy Time
+                      </div>
+                      <table class="min-w-full divide-y divide-gray-100">
+                        <tbody id="table-time-30" class="text-xs"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+
+            </div> -->
+            <div id="view-stats" class="hidden">
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-green-50 p-4 rounded-xl border border-green-100">
+                  <p class="text-xs text-green-600 uppercase font-bold">
+                    Total Earnings
+                  </p>
+                  <h3 class="text-xl font-bold text-gray-800">
+                    ₹<span id="st-earnings">0</span>
+                  </h3>
+                </div>
+                <div class="bg-red-50 p-4 rounded-xl border border-red-100">
+                  <p class="text-xs text-red-600 uppercase font-bold">
+                    Pending Dues
+                  </p>
+                  <h3 class="text-xl font-bold text-gray-800">
+                    ₹<span id="st-pending">0</span>
+                  </h3>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                  <p class="text-xs text-blue-600 uppercase font-bold">
+                    Total Bookings
+                  </p>
+                  <h3 class="text-xl font-bold text-gray-800">
+                    <span id="st-total">0</span>
+                  </h3>
+                </div>
+                <div
+                  class="bg-purple-50 p-4 rounded-xl border border-purple-100"
+                >
+                  <p class="text-xs text-purple-600 uppercase font-bold">
+                    Active Now
+                  </p>
+                  <h3 class="text-xl font-bold text-gray-800">
+                    <span id="st-active">0</span>
+                  </h3>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white border rounded-xl p-4">
+                  <h4
+                    class="text-sm font-bold text-gray-700 mb-3 border-b pb-2"
+                  >
+                    Booking Status
+                  </h4>
+                  <div class="flex justify-between text-xs mb-2">
+                    <span>Completed</span
+                    ><span id="st-completed" class="font-bold">0</span>
+                  </div>
+                  <div class="flex justify-between text-xs mb-2">
+                    <span>Cancelled (No Show)</span
+                    ><span id="st-cancelled" class="font-bold text-red-500"
+                      >0</span
+                    >
+                  </div>
+                </div>
+
                 <div class="bg-white border rounded-xl p-4">
                   <h4
                     class="text-sm font-bold text-gray-700 mb-3 border-b pb-2"
@@ -321,10 +469,157 @@
                   </div>
                 </div>
               </div>
+
+              <div class="mt-8 border-t border-gray-200 pt-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">
+                  Top Performing Slots
+                </h3>
+
+                <h4
+                  class="text-xs font-bold text-indigo-600 uppercase mb-3 flex items-center gap-2"
+                >
+                  <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Last
+                  24 Hours
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <div
+                    class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm"
+                  >
+                    <div
+                      class="bg-gray-50 px-4 py-3 border-b border-gray-100 flex justify-between items-center"
+                    >
+                      <span class="text-xs font-bold text-gray-700"
+                        >Top Revenue</span
+                      >
+                      <span
+                        class="text-[10px] text-gray-400 bg-white border px-2 py-0.5 rounded"
+                        >₹ Generated</span
+                      >
+                    </div>
+                    <div class="overflow-x-auto">
+                      <table class="min-w-full divide-y divide-gray-100">
+                        <tbody
+                          id="table-rev-24"
+                          class="text-xs divide-y divide-gray-50 bg-white"
+                        ></tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div
+                    class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm"
+                  >
+                    <div
+                      class="bg-gray-50 px-4 py-3 border-b border-gray-100 flex justify-between items-center"
+                    >
+                      <span class="text-xs font-bold text-gray-700"
+                        >Top Occupancy</span
+                      >
+                      <span
+                        class="text-[10px] text-gray-400 bg-white border px-2 py-0.5 rounded"
+                        >Hours</span
+                      >
+                    </div>
+                    <div class="overflow-x-auto">
+                      <table class="min-w-full divide-y divide-gray-100">
+                        <tbody
+                          id="table-time-24"
+                          class="text-xs divide-y divide-gray-50 bg-white"
+                        ></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <h4
+                  class="text-xs font-bold text-purple-600 uppercase mb-3 flex items-center gap-2"
+                >
+                  <span class="w-2 h-2 rounded-full bg-purple-500"></span> Last
+                  30 Days
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div
+                    class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm"
+                  >
+                    <div
+                      class="bg-gray-50 px-4 py-3 border-b border-gray-100 flex justify-between items-center"
+                    >
+                      <span class="text-xs font-bold text-gray-700"
+                        >Top Revenue</span
+                      >
+                      <span
+                        class="text-[10px] text-gray-400 bg-white border px-2 py-0.5 rounded"
+                        >₹ Generated</span
+                      >
+                    </div>
+                    <div class="overflow-x-auto">
+                      <table class="min-w-full divide-y divide-gray-100">
+                        <tbody
+                          id="table-rev-30"
+                          class="text-xs divide-y divide-gray-50 bg-white"
+                        ></tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div
+                    class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm"
+                  >
+                    <div
+                      class="bg-gray-50 px-4 py-3 border-b border-gray-100 flex justify-between items-center"
+                    >
+                      <span class="text-xs font-bold text-gray-700"
+                        >Top Occupancy</span
+                      >
+                      <span
+                        class="text-[10px] text-gray-400 bg-white border px-2 py-0.5 rounded"
+                        >Hours</span
+                      >
+                    </div>
+                    <div class="overflow-x-auto">
+                      <table class="min-w-full divide-y divide-gray-100">
+                        <tbody
+                          id="table-time-30"
+                          class="text-xs divide-y divide-gray-50 bg-white"
+                        ></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- TAB: LOGS (NEW) -->
             <div id="view-logs" class="hidden">
+              <div id="view-logs" class="">
+                <!-- NEW: Export Button -->
+                <div class="flex justify-end mb-3">
+                  <button
+                    onclick="exportLogs()"
+                    class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 px-4 rounded flex items-center gap-2 shadow-sm"
+                  >
+                    <svg
+                      class="w-3 h-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                      />
+                    </svg>
+                    Download CSV
+                  </button>
+                </div>
+
+                <!-- Existing Table Container -->
+                <div
+                  class="bg-white rounded-lg border border-gray-200 overflow-hidden"
+                >
+                  <!-- ... existing table code ... -->
+                </div>
+              </div>
               <div
                 class="bg-white rounded-lg border border-gray-200 overflow-hidden"
               >
@@ -772,6 +1067,8 @@
           '<tr><td colspan="6" class="px-4 py-8 text-center text-xs text-gray-400">Loading...</td></tr>';
         try {
           const logs = await fetchAPI(`/area-owner/area/${id}/logs`);
+          // ✅ STORE DATA GLOBALLY
+          currentLogs = logs || [];
           tbody.innerHTML = "";
 
           if (!logs.length) {
@@ -823,6 +1120,52 @@
         } catch (err) {
           tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-xs text-red-500">Error: ${err.message}</td></tr>`;
         }
+      }
+      function exportLogs() {
+        if (!currentLogs || currentLogs.length === 0) {
+          alert("No logs available to export.");
+          return;
+        }
+
+        // 1. Map Data to Flat Structure
+        const flatData = currentLogs.map((log) => {
+          return {
+            ID: log.bookingId,
+            "Date/Time": new Date(log.time).toLocaleString(),
+            UserName: log.userName,
+            MobileNumber: log.userPhone,
+            Vehicle: log.vehicleNumber,
+            Status: log.status,
+            SlotNumber: log.slotNumber,
+            Amount: log.amount.toFixed(2),
+          };
+        });
+
+        // 2. Define Headers and Keys
+        const headers = [
+          "ID",
+          "Date/Time",
+          "UserName",
+          "MobileNumber",
+          "Vehicle",
+          "Status",
+          "SlotNumber",
+          "Amount",
+        ];
+        const keys = [
+          "ID",
+          "Date/Time",
+          "UserName",
+          "MobileNumber",
+          "Vehicle",
+          "Status",
+          "SlotNumber",
+          "Amount",
+        ];
+
+        // 3. Download
+        const filename = `parking_logs_area_${selectedAreaId}.csv`;
+        ExportUtils.downloadCSV(flatData, headers, keys, filename);
       }
 
       async function createArea(e) {
@@ -937,13 +1280,114 @@
             stats.totalReservationHours.toFixed(2);
           document.getElementById("st-park-hrs").innerText =
             stats.totalParkingHours.toFixed(2);
+
+          // 2. Load Slot Tables (NEW)
+          const slotStats = await fetchAPI(
+            `/area-owner/area/${id}/analytics/slots`
+          );
+
+          renderSlotTable("table-rev-24", slotStats.topRevenue24h, "₹");
+          renderSlotTable("table-time-24", slotStats.topTime24h, "hrs");
+          renderSlotTable("table-rev-30", slotStats.topRevenue30d, "₹");
+          renderSlotTable("table-time-30", slotStats.topTime30d, "hrs");
         } catch (err) {
           console.error("Failed to load stats", err);
         }
       }
 
+      // Helper to render rows
+      // function renderSlotTable(elementId, data, unit) {
+      //   const tbody = document.getElementById(elementId);
+      //   tbody.innerHTML = "";
+
+      //   if (!data || data.length === 0) {
+      //     tbody.innerHTML =
+      //       '<tr><td class="p-3 text-center text-gray-400">No data</td></tr>';
+      //     return;
+      //   }
+
+      //   data.forEach((d, index) => {
+      //     tbody.innerHTML += `
+      //           <tr>
+      //               <td class="px-4 py-2 font-bold text-gray-700 w-10">#${
+      //                 index + 1
+      //               }</td>
+      //               <td class="px-4 py-2 text-gray-800">${d.slotNumber}</td>
+      //               <td class="px-4 py-2 text-right font-mono font-bold text-indigo-600">
+      //                   ${
+      //                     unit === "₹"
+      //                       ? "₹" + d.value.toFixed(2)
+      //                       : d.value.toFixed(1) + " hrs"
+      //                   }
+      //               </td>
+      //               <td class="px-4 py-2 text-right text-gray-400 text-[10px]">${
+      //                 d.bookingCount
+      //               } bookings</td>
+      //           </tr>`;
+      //   });
+      // }
+
+      // Helper to render rows with better layout
+      function renderSlotTable(elementId, data, unit) {
+        const tbody = document.getElementById(elementId);
+        tbody.innerHTML = "";
+
+        if (!data || data.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="4" class="p-4 text-center text-gray-400 text-xs italic">No data available for this period.</td></tr>';
+          return;
+        }
+
+        data.forEach((d, index) => {
+          // Medal colors for top 3
+          let rankClass = "text-gray-400 font-medium";
+          let rankIcon = `#${index + 1}`;
+
+          if (index === 0) {
+            rankClass = "text-amber-500 font-bold";
+            rankIcon = "🥇";
+          } else if (index === 1) {
+            rankClass = "text-slate-400 font-bold";
+            rankIcon = "🥈";
+          } else if (index === 2) {
+            rankClass = "text-orange-400 font-bold";
+            rankIcon = "🥉";
+          }
+
+          tbody.innerHTML += `
+        <tr class="hover:bg-gray-50 transition-colors group">
+            <td class="pl-4 pr-2 py-3 w-8 text-center whitespace-nowrap ${rankClass}">
+                ${rankIcon}
+            </td>
+            
+            <td class="px-2 py-3 whitespace-nowrap">
+                <div class="text-sm font-bold text-gray-700 group-hover:text-indigo-600 transition-colors">
+                    ${d.slotNumber}
+                </div>
+            </td>
+
+            <td class="px-2 py-3 text-right whitespace-nowrap">
+                 <div class="font-mono font-bold text-gray-800 text-sm">
+                    ${unit === "₹" ? "₹" : ""}${d.value.toFixed(1)}${
+            unit === "hrs"
+              ? "<span class='text-xs text-gray-900 font-sans ml-0.5'>hrs</span>"
+              : ""
+          }
+                 </div>
+            </td>
+
+            <td class="pl-2 pr-4 py-3 text-right whitespace-nowrap">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-bold bg-gray-100 text-gray-900 border border-gray-200">
+                    ${d.bookingCount} bookings
+                </span>
+            </td>
+        </tr>`;
+        });
+      }
+
       // --- SLOTS (NEW VISUAL EDITOR) ---
       async function loadSlots(id) {
+        let currentLogs = []; // Store logs for export
         const grid = document.getElementById("live-slots-grid");
         grid.innerHTML =
           '<div class="col-span-4 text-xs text-center">Loading slots...</div>';
