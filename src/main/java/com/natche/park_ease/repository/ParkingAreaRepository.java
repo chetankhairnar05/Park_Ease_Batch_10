@@ -17,7 +17,8 @@ public interface ParkingAreaRepository extends JpaRepository<ParkingArea, Long> 
     // Find nearby areas (Simple name search, Geo-spatial requires native queries or Postgres/GIS)
     List<ParkingArea> findByNameContainingIgnoreCase(String name);
 
-
+    //find all 
+    List<ParkingArea> findAll();
     
     @Query(
     value = "SELECT p.area_id AS areaId, " +

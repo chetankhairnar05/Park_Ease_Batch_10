@@ -65,14 +65,14 @@ public class AdminSeeder implements CommandLineRunner {
         // 1. Create 3 Admins (Each gets 1 Area & Vehicles)
         for (int i = 1; i <= 3; i++) {
             User admin = createUser("Admin " + i, "admin" + i + "@gmail.com", commonPass, UserRole.ADMIN, null, null);
-            createVehiclesForUser(admin); // Assign Vehicles
-            createFullAreaEnvironment(admin, areaCounter++, commonPass); // Assign 1 Area
+            // createVehiclesForUser(admin); // Assign Vehicles
+            // createFullAreaEnvironment(admin, areaCounter++, commonPass); // Assign 1 Area
         }
 
         // 2. Create 3 Area Owners (Each gets 2 Areas & Vehicles)
         for (int i = 1; i <= 3; i++) {
             User owner = createUser("Owner " + i, "owner" + i + "@gmail.com", commonPass, UserRole.AREA_OWNER, null, null);
-            createVehiclesForUser(owner); // Assign Vehicles
+            // createVehiclesForUser(owner); // Assign Vehicles
             
             // Each Owner gets 2 distinct areas
             createFullAreaEnvironment(owner, areaCounter++, commonPass);

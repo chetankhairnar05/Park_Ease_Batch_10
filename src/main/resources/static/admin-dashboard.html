@@ -14,6 +14,8 @@
         font-family: "Inter", sans-serif;
       }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/export-utils.js"></script>
   </head>
   <body class="bg-gray-900 min-h-screen">
     <!-- Header -->
@@ -38,116 +40,116 @@
           >
         </div>
       </div>
+      <!-- Inside Header or a new Tab Bar below Header -->
+      <div class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8">
+        <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+          <button
+            onclick="switchTab('staff')"
+            id="tab-staff"
+            class="border-pink-500 text-pink-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+          >
+            Staff Management
+          </button>
+          <button
+            onclick="switchTab('analytics')"
+            id="tab-analytics"
+            class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+          >
+            Platform Analytics
+          </button>
+        </nav>
+      </div>
     </header>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- LEFT COLUMN -->
-        <div class="lg:col-span-1 space-y-6">
-          <!-- 1. PENDING APPROVALS (NEW SECTION) -->
-          <div
-            class="bg-white rounded-xl shadow-sm border border-orange-200 overflow-hidden"
-          >
+    <!-- TAB: Staff Management -->
+    <div id="view-staff">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- LEFT COLUMN -->
+          <div class="lg:col-span-1 space-y-6">
+            <!-- 1. PENDING APPROVALS (NEW SECTION) -->
             <div
-              class="px-6 py-3 border-b border-orange-100 bg-orange-50 flex justify-between items-center"
+              class="bg-white rounded-xl shadow-sm border border-orange-200 overflow-hidden"
             >
-              <h2
-                class="text-sm font-bold text-orange-800 uppercase tracking-wider"
+              <div
+                class="px-6 py-3 border-b border-orange-100 bg-orange-50 flex justify-between items-center"
               >
-                🔔 Pending Requests
-              </h2>
-              <span
-                id="pending-count"
-                class="bg-orange-200 text-orange-800 text-[10px] px-2 py-0.5 rounded-full font-bold"
-                >0</span
-              >
-            </div>
-            <div
-              id="pending-list"
-              class="divide-y divide-gray-50 max-h-64 overflow-y-auto"
-            >
-              <div class="p-6 text-center text-gray-400 text-xs">
-                No pending requests.
-              </div>
-            </div>
-          </div>
-
-          <!-- 2. CREATE STAFF FORM -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 class="text-lg font-bold text-gray-900 mb-1">
-              Create Staff Manually
-            </h2>
-            <p class="text-xs text-gray-500 mb-6">
-              Create new Admins or Area Owners directly.
-            </p>
-
-            <form onsubmit="createStaff(event)" class="space-y-4">
-              <div>
-                <label
-                  class="block text-xs font-bold text-gray-500 uppercase mb-1"
-                  >Role</label
+                <h2
+                  class="text-sm font-bold text-orange-800 uppercase tracking-wider"
                 >
-                <div class="grid grid-cols-2 gap-2">
-                  <label class="cursor-pointer">
-                    <input
-                      type="radio"
-                      name="role"
-                      value="AREA_OWNER"
-                      checked
-                      class="peer hidden"
-                    />
-                    <div
-                      class="text-center py-2 border rounded-lg text-sm font-medium text-gray-600 bg-gray-50 peer-checked:bg-amber-50 peer-checked:text-amber-700 peer-checked:border-amber-500 transition"
-                    >
-                      Area Owner
-                    </div>
-                  </label>
-                  <label class="cursor-pointer">
-                    <input
-                      type="radio"
-                      name="role"
-                      value="ADMIN"
-                      class="peer hidden"
-                    />
-                    <div
-                      class="text-center py-2 border rounded-lg text-sm font-medium text-gray-600 bg-gray-50 peer-checked:bg-pink-50 peer-checked:text-pink-700 peer-checked:border-pink-500 transition"
-                    >
-                      Admin
-                    </div>
-                  </label>
+                  🔔 Pending Requests
+                </h2>
+                <span
+                  id="pending-count"
+                  class="bg-orange-200 text-orange-800 text-[10px] px-2 py-0.5 rounded-full font-bold"
+                  >0</span
+                >
+              </div>
+              <div
+                id="pending-list"
+                class="divide-y divide-gray-50 max-h-64 overflow-y-auto"
+              >
+                <div class="p-6 text-center text-gray-400 text-xs">
+                  No pending requests.
                 </div>
               </div>
+            </div>
 
-              <div>
-                <label
-                  class="block text-xs font-bold text-gray-500 uppercase mb-1"
-                  >Full Name</label
-                ><input
-                  type="text"
-                  id="s-name"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none"
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  class="block text-xs font-bold text-gray-500 uppercase mb-1"
-                  >Email</label
-                ><input
-                  type="email"
-                  id="s-email"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none"
-                  required
-                />
-              </div>
-              <div class="grid grid-cols-2 gap-3">
+            <!-- 2. CREATE STAFF FORM -->
+            <div
+              class="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+            >
+              <h2 class="text-lg font-bold text-gray-900 mb-1">
+                Create Staff Manually
+              </h2>
+              <p class="text-xs text-gray-500 mb-6">
+                Create new Admins or Area Owners directly.
+              </p>
+
+              <form onsubmit="createStaff(event)" class="space-y-4">
                 <div>
                   <label
                     class="block text-xs font-bold text-gray-500 uppercase mb-1"
-                    >Phone</label
+                    >Role</label
+                  >
+                  <div class="grid grid-cols-2 gap-2">
+                    <label class="cursor-pointer">
+                      <input
+                        type="radio"
+                        name="role"
+                        value="AREA_OWNER"
+                        checked
+                        class="peer hidden"
+                      />
+                      <div
+                        class="text-center py-2 border rounded-lg text-sm font-medium text-gray-600 bg-gray-50 peer-checked:bg-amber-50 peer-checked:text-amber-700 peer-checked:border-amber-500 transition"
+                      >
+                        Area Owner
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input
+                        type="radio"
+                        name="role"
+                        value="ADMIN"
+                        class="peer hidden"
+                      />
+                      <div
+                        class="text-center py-2 border rounded-lg text-sm font-medium text-gray-600 bg-gray-50 peer-checked:bg-pink-50 peer-checked:text-pink-700 peer-checked:border-pink-500 transition"
+                      >
+                        Admin
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    class="block text-xs font-bold text-gray-500 uppercase mb-1"
+                    >Full Name</label
                   ><input
                     type="text"
-                    id="s-phone"
+                    id="s-name"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none"
                     required
                   />
@@ -155,50 +157,74 @@
                 <div>
                   <label
                     class="block text-xs font-bold text-gray-500 uppercase mb-1"
-                    >Password</label
+                    >Email</label
                   ><input
-                    type="password"
-                    id="s-pass"
+                    type="email"
+                    id="s-email"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none"
                     required
                   />
                 </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label
+                      class="block text-xs font-bold text-gray-500 uppercase mb-1"
+                      >Phone</label
+                    ><input
+                      type="text"
+                      id="s-phone"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label
+                      class="block text-xs font-bold text-gray-500 uppercase mb-1"
+                      >Password</label
+                    ><input
+                      type="password"
+                      id="s-pass"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  class="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 rounded-lg shadow-md transition transform active:scale-95 text-sm mt-2"
+                >
+                  Create / Promote User
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- RIGHT: STAFF LIST -->
+          <div class="lg:col-span-2">
+            <div
+              class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+            >
+              <div
+                class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50"
+              >
+                <h2
+                  class="text-sm font-bold text-gray-700 uppercase tracking-wider"
+                >
+                  Active Staff Directory
+                </h2>
+                <button
+                  onclick="loadAllData()"
+                  class="text-xs text-pink-600 hover:text-pink-800 font-bold"
+                >
+                  Refresh All
+                </button>
               </div>
 
-              <button
-                type="submit"
-                class="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 rounded-lg shadow-md transition transform active:scale-95 text-sm mt-2"
-              >
-                Create / Promote User
-              </button>
-            </form>
-          </div>
-        </div>
-
-        <!-- RIGHT: STAFF LIST -->
-        <div class="lg:col-span-2">
-          <div
-            class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-          >
-            <div
-              class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50"
-            >
-              <h2
-                class="text-sm font-bold text-gray-700 uppercase tracking-wider"
-              >
-                Active Staff Directory
-              </h2>
-              <button
-                onclick="loadAllData()"
-                class="text-xs text-pink-600 hover:text-pink-800 font-bold"
-              >
-                Refresh All
-              </button>
-            </div>
-
-            <div id="staff-list" class="divide-y divide-gray-100">
-              <div class="p-8 text-center text-gray-400 text-sm">
-                Loading staff members...
+              <div id="staff-list" class="divide-y divide-gray-100">
+                <div class="p-8 text-center text-gray-400 text-sm">
+                  Loading staff members...
+                </div>
               </div>
             </div>
           </div>
@@ -206,6 +232,285 @@
       </div>
     </div>
 
+    <!-- TAB: ANALYTICS -->
+    <!-- <div
+      id="view-analytics"
+      class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+    >
+      
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+          <p class="text-xs text-gray-500 uppercase font-bold">Total Areas</p>
+          <h3 class="text-2xl font-bold text-gray-900" id="gl-areas">0</h3>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+          <p class="text-xs text-green-600 uppercase font-bold">
+            Total Revenue
+          </p>
+          <h3 class="text-2xl font-bold text-gray-900">
+            ₹<span id="gl-revenue">0</span>
+          </h3>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+          <p class="text-xs text-blue-600 uppercase font-bold">
+            Total Bookings
+          </p>
+          <h3 class="text-2xl font-bold text-gray-900" id="gl-bookings">0</h3>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+          <p class="text-xs text-purple-600 uppercase font-bold">Active Now</p>
+          <h3 class="text-2xl font-bold text-gray-900" id="gl-active">0</h3>
+        </div>
+      </div>
+
+\
+      <div
+        class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8"
+      >
+        <div
+          class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50"
+        >
+          <h3 class="font-bold text-gray-700">Area Performance</h3>
+          <button
+            onclick="exportAdminStats()"
+            class="text-xs bg-green-600 text-white px-3 py-1.5 rounded hover:bg-green-700 font-bold"
+          >
+            Export CSV
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Area Name
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Owner
+                </th>
+                <th
+                  class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Revenue
+                </th>
+                <th
+                  class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Bookings
+                </th>
+                <th
+                  class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Active
+                </th>
+                <th
+                  class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Action
+                </th>
+              </tr>
+            </thead>
+            <tbody
+              id="admin-analytics-table"
+              class="bg-white divide-y divide-gray-200"
+            >
+              <tr>
+                <td colspan="6" class="p-4 text-center text-sm text-gray-500">
+                  Loading data...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <div
+        id="admin-chart-modal"
+        class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+      >
+        <div
+          class="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        >
+          <div
+            class="p-4 border-b flex justify-between items-center bg-gray-50"
+          >
+            <div>
+              <h3 class="font-bold text-lg text-gray-800" id="chart-area-name">
+                Area Analytics
+              </h3>
+              <p class="text-xs text-gray-500">Performance Trends</p>
+            </div>
+            <div class="flex gap-2">
+              <button
+                onclick="switchChartMode('24h')"
+                id="btn-adm-24h"
+                class="text-xs bg-white border border-indigo-200 text-indigo-600 px-3 py-1 rounded hover:bg-indigo-50"
+              >
+                24 Hours
+              </button>
+              <button
+                onclick="switchChartMode('30d')"
+                id="btn-adm-30d"
+                class="text-xs bg-white border border-gray-200 text-gray-500 px-3 py-1 rounded hover:bg-gray-50"
+              >
+                30 Days
+              </button>
+              <button
+                onclick="closeAdminCharts()"
+                class="text-gray-400 hover:text-gray-600 ml-2"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+          <div class="p-6 overflow-y-auto bg-gray-50">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="bg-white p-4 rounded-xl shadow-sm border">
+                <canvas id="admRevenueChart"></canvas>
+              </div>
+              <div class="bg-white p-4 rounded-xl shadow-sm border">
+                <canvas id="admCountChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div> -->
+    <!-- TAB: Analytics -->
+    <div
+      id="view-analytics"
+      class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+    >
+      <!-- Controls -->
+      <div
+        class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-wrap gap-4 items-end"
+      >
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase mb-1"
+            >Start Date</label
+          >
+          <input type="date" id="an-start" class="border rounded p-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase mb-1"
+            >End Date</label
+          >
+          <input type="date" id="an-end" class="border rounded p-2 text-sm" />
+        </div>
+        <div class="flex gap-2">
+          <button
+            onclick="applyDateFilter()"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-4 py-2 rounded"
+          >
+            Apply Filter
+          </button>
+          <button
+            onclick="resetDateFilter()"
+            class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-bold px-4 py-2 rounded"
+          >
+            All Time
+          </button>
+          <button
+            onclick="exportAdminStats()"
+            class="bg-green-600 hover:bg-green-700 text-white text-sm font-bold px-4 py-2 rounded flex items-center gap-1"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
+            </svg>
+            CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Global Summary -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+          <p class="text-xs text-gray-500 uppercase font-bold">Total Revenue</p>
+          <h3 class="text-2xl font-bold text-gray-900">
+            ₹<span id="gl-revenue">0</span>
+          </h3>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+          <p class="text-xs text-blue-600 uppercase font-bold">
+            Total Bookings
+          </p>
+          <h3 class="text-2xl font-bold text-gray-900" id="gl-bookings">0</h3>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+          <p class="text-xs text-purple-600 uppercase font-bold">Active Now</p>
+          <h3 class="text-2xl font-bold text-gray-900" id="gl-active">0</h3>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+          <p class="text-xs text-orange-600 uppercase font-bold">
+            Avg Duration
+          </p>
+          <h3 class="text-2xl font-bold text-gray-900">
+            <span id="gl-duration">0</span>h
+          </h3>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div
+        class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+      >
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th
+                class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase"
+              >
+                Area Name
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase"
+              >
+                Owner
+              </th>
+              <th
+                class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase"
+              >
+                Revenue
+              </th>
+              <th
+                class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase"
+              >
+                Bookings
+              </th>
+              <th
+                class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase"
+              >
+                Avg Duration
+              </th>
+              <th
+                class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase"
+              >
+                Details
+              </th>
+            </tr>
+          </thead>
+          <tbody
+            id="admin-analytics-table"
+            class="bg-white divide-y divide-gray-200"
+          ></tbody>
+        </table>
+      </div>
+    </div>
     <script>
       const API_BASE = "http://localhost:8080/api";
       const token = localStorage.getItem("parkease_token");
@@ -227,6 +532,386 @@
           alert("Session Error");
           window.location.href = "auth.html";
         }
+      }
+
+      let adminStatsData = [];
+      let currentChartAreaId = null;
+      let chartMode = "24h";
+      let admCharts = {};
+      let loadedCharts = {}; // Track active charts
+
+      function switchTab(tab) {
+        // Toggle visibility of #view-staff (wrap existing content) and #view-analytics
+        const staffView = document.getElementById("view-staff"); // Need to wrap existing content in this ID
+        const analyticsView = document.getElementById("view-analytics");
+        const tStaff = document.getElementById("tab-staff");
+        const tAnalytics = document.getElementById("tab-analytics");
+
+        if (tab === "analytics") {
+          staffView.classList.add("hidden");
+          analyticsView.classList.remove("hidden");
+          tAnalytics.classList.replace("border-transparent", "border-pink-500");
+          tAnalytics.classList.replace("text-gray-500", "text-pink-600");
+          tStaff.classList.replace("border-pink-500", "border-transparent");
+          tStaff.classList.replace("text-pink-600", "text-gray-500");
+          loadAdminAnalytics();
+        } else {
+          staffView.classList.remove("hidden");
+          analyticsView.classList.add("hidden");
+          tStaff.classList.replace("border-transparent", "border-pink-500");
+          tStaff.classList.replace("text-gray-500", "text-pink-600");
+          tAnalytics.classList.replace("border-pink-500", "border-transparent");
+          tAnalytics.classList.replace("text-pink-600", "text-gray-500");
+        }
+      }
+
+      // async function loadAdminAnalytics() {
+      //   try {
+      //     const data = await fetchAPI("/admin/analytics/all-areas");
+      //     adminStatsData = data;
+
+      //     // Calculate Global Totals
+      //     const totalRev = data.reduce(
+      //       (sum, item) => sum + item.totalEarnings,
+      //       0
+      //     );
+      //     const totalBook = data.reduce(
+      //       (sum, item) => sum + item.totalBookings,
+      //       0
+      //     );
+      //     const totalActive = data.reduce(
+      //       (sum, item) => sum + item.activeBookings,
+      //       0
+      //     );
+
+      //     document.getElementById("gl-areas").innerText = data.length;
+      //     document.getElementById("gl-revenue").innerText = totalRev.toFixed(2);
+      //     document.getElementById("gl-bookings").innerText = totalBook;
+      //     document.getElementById("gl-active").innerText = totalActive;
+
+      //     // Render Table
+      //     const tbody = document.getElementById("admin-analytics-table");
+      //     tbody.innerHTML = "";
+
+      //     data.forEach((area) => {
+      //       tbody.innerHTML += `
+      //           <tr class="hover:bg-gray-50 transition">
+      //               <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">${
+      //                 area.name
+      //               }</td>
+      //               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${
+      //                 area.owner
+      //               }</td>
+      //               <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-mono font-bold text-green-600">₹${area.totalEarnings.toFixed(
+      //                 2
+      //               )}</td>
+      //               <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-700">${
+      //                 area.totalBookings
+      //               }</td>
+      //               <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-purple-600">${
+      //                 area.activeBookings
+      //               }</td>
+      //               <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+      //                   <button onclick="openAdminCharts(${
+      //                     area.areaId
+      //                   }, '${area.name.replace(
+      //         /'/g,
+      //         "\\'"
+      //       )}')" class="text-indigo-600 hover:text-indigo-900 hover:underline">View Graphs</button>
+      //               </td>
+      //           </tr>`;
+      //     });
+      //   } catch (e) {
+      //     console.error(e);
+      //   }
+      // }
+
+      async function loadAdminAnalytics() {
+        const start = document.getElementById("an-start").value;
+        const end = document.getElementById("an-end").value;
+
+        // Build Query Params
+        let query = "";
+        if (start && end)
+          query = `?start=${start}T00:00:00&end=${end}T23:59:59`;
+
+        const tbody = document.getElementById("admin-analytics-table");
+        tbody.innerHTML =
+          '<tr><td colspan="6" class="p-4 text-center text-sm text-gray-500">Loading...</td></tr>';
+
+        try {
+          const data = await fetchAPI(`/admin/analytics/all-areas${query}`);
+          adminStatsData = data;
+          renderTable(data);
+          updateSummary(data);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      function updateSummary(data) {
+        const totalRev = data.reduce((s, i) => s + i.totalEarnings, 0);
+        const totalBook = data.reduce((s, i) => s + i.totalBookings, 0);
+        const totalActive = data.reduce((s, i) => s + i.activeBookings, 0);
+        const totalDur = data.reduce(
+          (s, i) => s + i.avgDuration * i.totalBookings,
+          0
+        ); // Weighted
+        const avgDur = totalBook > 0 ? totalDur / totalBook : 0;
+
+        document.getElementById("gl-revenue").innerText = totalRev.toFixed(2);
+        document.getElementById("gl-bookings").innerText = totalBook;
+        document.getElementById("gl-active").innerText = totalActive;
+        document.getElementById("gl-duration").innerText = avgDur.toFixed(1);
+      }
+
+      function renderTable(data) {
+        const tbody = document.getElementById("admin-analytics-table");
+        tbody.innerHTML = "";
+
+        data.forEach((area) => {
+          // Main Row
+          tbody.innerHTML += `
+                <tr class="hover:bg-gray-50 transition cursor-pointer border-b border-gray-100" onclick="toggleAreaGraph(${
+                  area.areaId
+                })">
+                    <td class="px-6 py-4 font-bold text-sm text-gray-900">${
+                      area.name
+                    }</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${
+                      area.owner
+                    }</td>
+                    <td class="px-6 py-4 text-sm text-right font-mono font-bold text-green-600">₹${area.totalEarnings.toFixed(
+                      2
+                    )}</td>
+                    <td class="px-6 py-4 text-sm text-right text-gray-700">${
+                      area.totalBookings
+                    }</td>
+                    <td class="px-6 py-4 text-sm text-right font-mono text-orange-600">${area.avgDuration.toFixed(
+                      1
+                    )}h</td>
+                    <td class="px-6 py-4 text-center text-sm">
+                        <button class="text-indigo-600 hover:text-indigo-900 text-xs font-bold uppercase">Toggle Graphs</button>
+                    </td>
+                </tr>
+                <!-- Graph Row (Hidden) -->
+                <tr id="graph-row-${
+                  area.areaId
+                }" class="hidden bg-gray-50 border-b border-gray-200">
+                    <td colspan="6" class="p-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 h-64">
+                             <div class="bg-white p-2 rounded shadow-sm relative"><canvas id="chart-rev-${
+                               area.areaId
+                             }"></canvas></div>
+                             <div class="bg-white p-2 rounded shadow-sm relative"><canvas id="chart-book-${
+                               area.areaId
+                             }"></canvas></div>
+                             <div class="bg-white p-2 rounded shadow-sm relative"><canvas id="chart-dur-${
+                               area.areaId
+                             }"></canvas></div>
+                        </div>
+                    </td>
+                </tr>`;
+        });
+      }
+
+      async function openAdminCharts(areaId, areaName) {
+        currentChartAreaId = areaId;
+        document.getElementById("chart-area-name").innerText = areaName;
+        document.getElementById("admin-chart-modal").classList.remove("hidden");
+        switchChartMode("24h"); // Load default
+      }
+
+      function closeAdminCharts() {
+        document.getElementById("admin-chart-modal").classList.add("hidden");
+      }
+
+      async function switchChartMode(mode) {
+        chartMode = mode;
+        // Toggle buttons visual style... (omitted for brevity)
+
+        try {
+          const data = await fetchAPI(
+            `/area-owner/area/${currentChartAreaId}/analytics/charts`
+          ); // Reuse existing endpoint
+          const points = mode === "24h" ? data.hourlyData : data.dailyData;
+
+          renderAdminChart(
+            "admRevenueChart",
+            "Revenue",
+            points.map((p) => p.revenue),
+            "#059669"
+          );
+          renderAdminChart(
+            "admCountChart",
+            "Bookings",
+            points.map((p) => p.bookingCount),
+            "#4F46E5"
+          );
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      function renderAdminChart(canvasId, label, data, color) {
+        const ctx = document.getElementById(canvasId).getContext("2d");
+        if (admCharts[canvasId]) admCharts[canvasId].destroy();
+
+        admCharts[canvasId] = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: data.map((_, i) => i), // Simplified labels
+            datasets: [
+              {
+                label,
+                data,
+                borderColor: color,
+                tension: 0.4,
+                fill: true,
+                backgroundColor: color + "20",
+              },
+            ],
+          },
+          options: { responsive: true, maintainAspectRatio: false },
+        });
+      }
+
+      // function exportAdminStats() {
+      //   const headers = [
+      //     "Area ID",
+      //     "Name",
+      //     "Owner",
+      //     "Revenue",
+      //     "Active",
+      //     "Total Bookings",
+      //     "Completed",
+      //     "Cancelled",
+      //   ];
+      //   const keys = [
+      //     "areaId",
+      //     "name",
+      //     "owner",
+      //     "totalEarnings",
+      //     "activeBookings",
+      //     "totalBookings",
+      //     "completed",
+      //     "cancelled",
+      //   ];
+      //   ExportUtils.downloadCSV(
+      //     adminStatsData,
+      //     headers,
+      //     keys,
+      //     "Admin_Analytics.csv"
+      //   );
+      // }
+
+      async function toggleAreaGraph(areaId) {
+        const row = document.getElementById(`graph-row-${areaId}`);
+        row.classList.toggle("hidden");
+
+        // If showing, fetch and render charts
+        if (!row.classList.contains("hidden")) {
+          const start = document.getElementById("an-start").value;
+          const end = document.getElementById("an-end").value;
+          let query = "";
+          if (start && end)
+            query = `?start=${start}T00:00:00&end=${end}T23:59:59`;
+
+          const data = await fetchAPI(
+            `/admin/analytics/area/${areaId}/charts${query}`
+          );
+
+          // Decide which data to use based on backend logic
+          const points =
+            data.hourlyData && data.hourlyData.length > 0
+              ? data.hourlyData
+              : data.dailyData;
+
+          renderChart(
+            `chart-rev-${areaId}`,
+            "Revenue",
+            points.map((p) => p.revenue),
+            "#059669"
+          );
+          renderChart(
+            `chart-book-${areaId}`,
+            "Bookings",
+            points.map((p) => p.bookingCount),
+            "#4F46E5"
+          );
+          renderChart(
+            `chart-dur-${areaId}`,
+            "Avg Duration",
+            points.map((p) => p.avgDurationHrs),
+            "#D97706"
+          );
+        }
+      }
+
+      function renderChart(canvasId, label, data, color) {
+        const ctx = document.getElementById(canvasId).getContext("2d");
+        if (loadedCharts[canvasId]) loadedCharts[canvasId].destroy();
+
+        loadedCharts[canvasId] = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: data.map((_, i) => i), // Simplified numeric labels for compactness
+            datasets: [
+              {
+                label,
+                data,
+                borderColor: color,
+                backgroundColor: color + "20",
+                fill: true,
+                tension: 0.4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              title: { display: true, text: label },
+            },
+            scales: { x: { display: false } }, // Hide X labels for cleaner inline view
+          },
+        });
+      }
+
+      function applyDateFilter() {
+        loadAdminAnalytics();
+      }
+
+      function resetDateFilter() {
+        document.getElementById("an-start").value = "";
+        document.getElementById("an-end").value = "";
+        loadAdminAnalytics();
+      }
+
+      function exportAdminStats() {
+        const headers = [
+          "Area ID",
+          "Name",
+          "Owner",
+          "Revenue",
+          "Bookings",
+          "Avg Duration",
+        ];
+        const keys = [
+          "areaId",
+          "name",
+          "owner",
+          "totalEarnings",
+          "totalBookings",
+          "avgDuration",
+        ];
+        ExportUtils.downloadCSV(
+          adminStatsData,
+          headers,
+          keys,
+          "Admin_Analytics.csv"
+        );
       }
 
       async function fetchAPI(endpoint, method = "GET", body = null) {

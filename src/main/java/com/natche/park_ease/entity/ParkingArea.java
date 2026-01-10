@@ -31,7 +31,7 @@ public class ParkingArea {
 
     @OneToMany(mappedBy = "parkingArea", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
-    // No @JsonManagedReference needed if you ONLY use DTOs in controllers
+   
     private List<ParkingSlot> slots;
 
     // --- Dynamic Pricing Configuration (Moved here from Slot) ---

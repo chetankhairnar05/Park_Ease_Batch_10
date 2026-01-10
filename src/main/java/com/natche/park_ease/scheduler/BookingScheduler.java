@@ -58,9 +58,7 @@ public class BookingScheduler {
                     now
             ).toMinutes();
 
-            // FAST MODE: 1 Real Sec = 1 Virtual Min
-            // 60 Real Secs = 1 Virtual Hour
-            // No minimum charge logic here to keep it strictly mathematical
+            
             double hours = minutesWasted / 60.0; 
             
             double penalty = hours * booking.getHourlyReservationRateSnapshot();

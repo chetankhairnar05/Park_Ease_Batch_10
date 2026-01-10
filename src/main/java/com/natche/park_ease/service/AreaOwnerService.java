@@ -5,6 +5,7 @@ import com.natche.park_ease.dto.CreateSlotRequest;
 import com.natche.park_ease.dto.GuardRegisterRequest;
 import com.natche.park_ease.dto.SlotUpdateRequest;
 import com.natche.park_ease.dto.UpdateParkingAreaRequest;
+import com.natche.park_ease.dto.response.AnalyticsChartDto;
 import com.natche.park_ease.dto.response.AreaBookingLogDto;
 import com.natche.park_ease.dto.response.AreaStatisticsDto;
 import com.natche.park_ease.dto.response.FullAnalyticsResponse;
@@ -31,6 +32,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -52,74 +55,7 @@ public class AreaOwnerService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // ==========================================
-    // 1. RECRUIT GUARD (Promote or Create)
-    // ==========================================
-    // @Transactional
-    // public User recruitGuard(GuardRegisterRequest request, String ownerEmail) {
-        
-    //     // 1. Verify Owner & Area Ownership
-    //     User loggedInOwner = userRepository.findByEmailOrPhone(ownerEmail, ownerEmail)
-    //             .orElseThrow(() -> new RuntimeException("Owner not found"));
-
-    //     if (request.getAreaId() == null) throw new RuntimeException("Area ID required");
-        
-    //     ParkingArea targetArea = parkingAreaRepository.findById(request.getAreaId())
-    //             .orElseThrow(() -> new RuntimeException("This area does not exist"));
-
-    //     if (!Objects.equals(targetArea.getAreaOwner().getUserId(), loggedInOwner.getUserId())) {
-    //          throw new RuntimeException("Access Denied: You do not own this Area.");
-    //     }
-
-    //     // 2. Check if User exists
-    //     Optional<User> existingUserOpt = userRepository.findByEmailOrPhone(request.getEmail(), request.getPhone());
-    //     User guardUser;
-
-    //     if (existingUserOpt.isPresent()) {
-    //         // --- EXISTING USER LOGIC ---
-    //         guardUser = existingUserOpt.get();
-            
-    //         // Validation: Can only recruit DRIVERS
-    //         if (guardUser.getRole() == UserRole.GUARD) {
-    //             throw new RuntimeException("User is already a Guard (possibly at another area).");
-    //         }
-    //         if (guardUser.getRole() == UserRole.AREA_OWNER || guardUser.getRole() == UserRole.ADMIN) {
-    //             throw new RuntimeException("Cannot demote Admin/Owner to Guard.");
-    //         }
-
-    //         // Promote to GUARD
-    //         guardUser.setRole(UserRole.GUARD);
-    //         // We do NOT update password for existing users, they keep their own.
-    //     } else {
-    //         // --- NEW USER LOGIC ---
-    //         guardUser = User.builder()
-    //                 .name(request.getName())
-    //                 .email(request.getEmail())
-    //                 .phone(request.getPhone())
-    //                 .password(passwordEncoder.encode(request.getPassword()))
-    //                 .role(UserRole.GUARD) 
-    //                 .isEnabled(true).isBlocked(false)
-    //                 .build();
-    //     }
-        
-    //     User savedGuardUser = userRepository.save(guardUser);
-
-    //     // 3. Link Guard to Area
-    //     // Check if already linked to avoid duplicates
-    //     if (guardRepository.findByUser_UserId(savedGuardUser.getUserId()).isPresent()) {
-    //          throw new RuntimeException("User is already linked as a guard in the system.");
-    //     }
-
-    //     Guard guardEntity = Guard.builder()
-    //             .user(savedGuardUser)
-    //             .parkingArea(targetArea)
-    //             .build();
-
-    //     guardRepository.save(guardEntity);
-
-    //     return savedGuardUser;
-    // }
-
+    
     @Transactional
     public User recruitGuard(GuardRegisterRequest request, String ownerEmail) {
         
@@ -351,6 +287,145 @@ public class AreaOwnerService {
         return savedArea;
     }
 
+        // ==========================================
+    // GET STATISTICS (With Date Filter)
+    // ==========================================
+    public AreaStatisticsDto getAreaStatistics1(Long areaId, String ownerEmail, LocalDateTime start, LocalDateTime end) {
+        User loggedInUser = userRepository.findByEmailOrPhone(ownerEmail, ownerEmail).orElseThrow();
+        ParkingArea area = parkingAreaRepository.findById(areaId).orElseThrow(() -> new RuntimeException("Area not found"));
+
+        if (loggedInUser.getRole() != UserRole.ADMIN && 
+            !Objects.equals(area.getAreaOwner().getUserId(), loggedInUser.getUserId())) {
+            throw new RuntimeException("Access Denied");
+        }
+
+        List<Booking> allBookings = bookingRepository.findByArea_AreaId(areaId);
+        
+        // Filter by Date Range
+        List<Booking> bookings = allBookings.stream()
+                .filter(b -> {
+                    LocalDateTime time = b.getBookingTime() != null ? b.getBookingTime() : b.getReservationTime();
+                    if (time == null) return false;
+                    return (start == null || !time.isBefore(start)) && (end == null || !time.isAfter(end));
+                })
+                .collect(Collectors.toList());
+
+        // Aggregate Data
+        double totalEarnings = 0.0;
+        double totalPending = 0.0;
+        long completed = 0;
+        long cancelled = 0;
+        long active = 0;
+        double resHours = 0.0;
+        double parkHours = 0.0;
+
+        Set<Long> userIds = new java.util.HashSet<>();
+        Set<Long> vehicleIds = new java.util.HashSet<>();
+
+        for (Booking b : bookings) {
+            if (b.getUser() != null) userIds.add(b.getUser().getUserId());
+            if (b.getVehicle() != null) vehicleIds.add(b.getVehicle().getVehicleId());
+
+            if (b.getAmountPaid() != null) totalEarnings += b.getAmountPaid();
+            if (b.getAmountPending() != null) totalPending += b.getAmountPending();
+
+            if (b.getStatus() == BookingStatus.COMPLETED) completed++;
+            else if (b.getStatus() == BookingStatus.CANCELLED_NO_SHOW || b.getStatus() == BookingStatus.DEFAULTED) cancelled++;
+            else if (b.getStatus() == BookingStatus.RESERVED || b.getStatus() == BookingStatus.ACTIVE_PARKING) active++;
+
+            // Time Calc
+            if (b.getReservationTime() != null) {
+                LocalDateTime endRes = b.getArrivalTime() != null ? b.getArrivalTime() : 
+                                     (b.getExpectedEndTime() != null ? b.getExpectedEndTime() : LocalDateTime.now());
+                resHours += Duration.between(b.getReservationTime(), endRes).toSeconds() / 60.0;
+            }
+            if (b.getArrivalTime() != null) {
+                LocalDateTime endPark = b.getDepartureTime() != null ? b.getDepartureTime() : LocalDateTime.now();
+                parkHours += Duration.between(b.getArrivalTime(), endPark).toSeconds() / 60.0;
+            }
+        }
+
+        return AreaStatisticsDto.builder()
+                .totalBookings((long) bookings.size())
+                .totalEarnings(totalEarnings)
+                .totalPending(totalPending)
+                .completedBookings(completed)
+                .cancelledBookings(cancelled)
+                .activeBookings(active)
+                .uniqueUsers((long) userIds.size())
+                .uniqueVehicles((long) vehicleIds.size())
+                .totalReservationHours(Math.round(resHours * 100.0) / 100.0)
+                .totalParkingHours(Math.round(parkHours * 100.0) / 100.0)
+                .build();
+    }
+
+    // Overload for backward compatibility (defaults to All Time)
+    public AreaStatisticsDto getAreaStatistics1(Long areaId, String ownerEmail) {
+        return getAreaStatistics1(areaId, ownerEmail, null, null);
+    }
+
+    // ==========================================
+    // GET CHARTS (Dynamic X-Axis)
+    // ==========================================
+    public AnalyticsChartDto getAnalyticsCharts1(Long areaId, String ownerEmail, LocalDateTime start, LocalDateTime end) {
+        // Validation same as above...
+        
+        List<Booking> allBookings = bookingRepository.findByArea_AreaId(areaId);
+        
+        // Defaults if null
+        LocalDateTime effectiveStart = start != null ? start : LocalDateTime.now().minusMonths(1);
+        LocalDateTime effectiveEnd = end != null ? end : LocalDateTime.now();
+
+        long daysDiff = ChronoUnit.DAYS.between(effectiveStart, effectiveEnd);
+        boolean useHourly = daysDiff <= 2; // <= 2 days -> Hourly, > 2 days -> Daily
+
+        List<AnalyticsChartDto.DataPoint> dataPoints = new ArrayList<>();
+        
+        LocalDateTime current = effectiveStart;
+        
+        while (current.isBefore(effectiveEnd) || current.isEqual(effectiveEnd)) {
+            LocalDateTime windowStart = current;
+            LocalDateTime windowEnd = useHourly ? current.plusHours(1) : current.plusDays(1);
+            
+            // If using daily, ensure we cover the whole day 00:00 to 23:59
+            if(!useHourly) {
+               windowStart = current.toLocalDate().atStartOfDay();
+               windowEnd = current.plusDays(1).toLocalDate().atStartOfDay();
+            }
+
+            // Final variable for lambda
+            final LocalDateTime finalStart = windowStart;
+            final LocalDateTime finalEnd = windowEnd;
+
+            List<Booking> bucket = allBookings.stream()
+                .filter(b -> {
+                    LocalDateTime t = b.getBookingTime() != null ? b.getBookingTime() : b.getReservationTime();
+                    return t != null && (t.isEqual(finalStart) || t.isAfter(finalStart)) && t.isBefore(finalEnd);
+                })
+                .collect(Collectors.toList());
+            
+            String label = useHourly ? finalStart.format(DateTimeFormatter.ofPattern("HH:00")) 
+                                     : finalStart.format(DateTimeFormatter.ofPattern("dd MMM"));
+
+            dataPoints.add(calculateDataPoint(bucket, label));
+            
+            current = useHourly ? current.plusHours(1) : current.plusDays(1);
+        }
+
+        // Return data in 'hourlyData' if hourly, 'dailyData' if daily (Frontend will check array length)
+        // Or better: Use the appropriate field based on logic
+        if (useHourly) {
+            return AnalyticsChartDto.builder().hourlyData(dataPoints).dailyData(new ArrayList<>()).build();
+        } else {
+            return AnalyticsChartDto.builder().hourlyData(new ArrayList<>()).dailyData(dataPoints).build();
+        }
+    }
+    
+    // Original method overload for 24h default
+    public AnalyticsChartDto getAnalyticsCharts1(Long areaId, String ownerEmail) {
+        return getAnalyticsCharts1(areaId, ownerEmail, LocalDateTime.now().minusHours(24), LocalDateTime.now());
+    }
+
     // Helper for slot generation
     private List<ParkingSlot> generateSlotsForType(ParkingArea area, VehicleType type, int count, Double rate, String prefix) {
         List<ParkingSlot> slots = new ArrayList<>();
@@ -375,11 +450,16 @@ public class AreaOwnerService {
     @Transactional
     public void disableParkingArea(Long areaId, String ownerEmail) {
         User loggedInOwner = userRepository.findByEmailOrPhone(ownerEmail, ownerEmail).orElseThrow();
+
         
+      
         ParkingArea area = parkingAreaRepository.findById(areaId)
                 .orElseThrow(() -> new RuntimeException("Area not found"));
+        
+        
+        
 
-        if (!Objects.equals(area.getAreaOwner().getUserId(), loggedInOwner.getUserId())) {
+        if ( !Objects.equals(area.getAreaOwner().getUserId(), loggedInOwner.getUserId())) {
             throw new RuntimeException("Access Denied");
         }
 
@@ -520,30 +600,14 @@ public class AreaOwnerService {
 public List<ParkingArea> getAreasByOwner(String ownerEmail) {
     User owner = userRepository.findByEmailOrPhone(ownerEmail, ownerEmail)
             .orElseThrow(() -> new RuntimeException("Owner not found"));
+
     
     
     return parkingAreaRepository.findByAreaOwner_UserId(owner.getUserId());
 }
     
 
-    // public List<Map<String, Object>> getGuardsByArea(Long areaId, String name) {
-    //     User owner = userRepository.findByEmailOrPhone(name, name).orElseThrow();
-    //     ParkingArea area = parkingAreaRepository.findById(areaId).orElseThrow();
-    //     if(!Objects.equals(area.getAreaOwner().getUserId(), owner.getUserId())) {
-    //         throw new RuntimeException("Access Denied");
-    //     }
-    //     List<Guard> guards = guardRepository.findByParkingArea_AreaId(areaId);
-    //     List<Map<String, Object>> response = new ArrayList<>();
-    //     for(Guard guard : guards) {
-    //         Map<String, Object> guardInfo = new HashMap<>();
-    //         guardInfo.put("guardId", guard.getUser().getUserId());
-    //         guardInfo.put("name", guard.getUser().getName());
-    //         guardInfo.put("email", guard.getUser().getEmail());
-    //         guardInfo.put("phone", guard.getUser().getPhone());
-    //         response.add(guardInfo);
-    //     }
-    //     return response;
-    // }
+   
 
     public List<GuardDto> getGuardsByArea(Long areaId, String ownerEmail) {
         User loggedInOwner = userRepository.findByEmailOrPhone(ownerEmail, ownerEmail).orElseThrow();
@@ -573,11 +637,12 @@ public List<ParkingArea> getAreasByOwner(String ownerEmail) {
 
     public AreaStatisticsDto getAreaStatistics(Long areaId, String ownerEmail) {
         // 1. Verify Ownership
-        User loggedInOwner = userRepository.findByEmailOrPhone(ownerEmail, ownerEmail).orElseThrow();
+        User loggedInUser = userRepository.findByEmailOrPhone(ownerEmail, ownerEmail).orElseThrow();
         ParkingArea area = parkingAreaRepository.findById(areaId).orElseThrow(() -> new RuntimeException("Area not found"));
 
-        if ((loggedInOwner.getRole() != UserRole.ADMIN|| loggedInOwner.getRole() != UserRole.AREA_OWNER) && 
-            !Objects.equals(area.getAreaOwner().getUserId(), loggedInOwner.getUserId())) {
+// CORRECT LOGIC: Block ONLY if (Not Admin) AND (Not The Owner)
+        if (loggedInUser.getRole() != UserRole.ADMIN && 
+            !Objects.equals(area.getAreaOwner().getUserId(), loggedInUser.getUserId())) {
             throw new RuntimeException("Access Denied");
         }
 
@@ -750,7 +815,48 @@ public List<ParkingArea> getAreasByOwner(String ownerEmail) {
                 .build();
     }
 
-    // Helper to Group, Sum, and Sort
+   
+    public FullAnalyticsResponse getSlotAnalytics1(Long areaId, String ownerEmail) {
+        // 1. Verify Access
+        User loggedInUser = userRepository.findByEmailOrPhone(ownerEmail, ownerEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        ParkingArea area = parkingAreaRepository.findById(areaId)
+                .orElseThrow(() -> new RuntimeException("Area not found"));
+
+        if (loggedInUser.getRole() != UserRole.ADMIN && 
+            !Objects.equals(area.getAreaOwner().getUserId(), loggedInUser.getUserId())) {
+            throw new RuntimeException("Access Denied");
+        }
+
+        // 2. Fetch All Bookings
+        List<Booking> allBookings = bookingRepository.findByArea_AreaId(areaId);
+        LocalDateTime now = LocalDateTime.now();
+
+        // 3. Filter Lists (24h and 30d)
+        List<Booking> list24h = allBookings.stream()
+                .filter(b -> {
+                    LocalDateTime t = b.getBookingTime() != null ? b.getBookingTime() : b.getReservationTime();
+                    return t != null && t.isAfter(now.minusHours(24));
+                })
+                .collect(Collectors.toList());
+
+        List<Booking> list30d = allBookings.stream()
+                .filter(b -> {
+                    LocalDateTime t = b.getBookingTime() != null ? b.getBookingTime() : b.getReservationTime();
+                    return t != null && t.isAfter(now.minusDays(30));
+                })
+                .collect(Collectors.toList());
+
+        // 4. Build Response using Helper
+        return FullAnalyticsResponse.builder()
+                .topRevenue24h(aggregateTopSlots1(list24h, true))
+                .topTime24h(aggregateTopSlots1(list24h, false))
+                .topRevenue30d(aggregateTopSlots1(list30d, true))
+                .topTime30d(aggregateTopSlots1(list30d, false))
+                .build();
+    }
+    // // Helper to Group, Sum, and Sort
     private List<SlotAnalyticsDto> aggregateTopSlots(List<Booking> bookings, boolean isRevenue) {
         Map<String, SlotAnalyticsDto> map = new HashMap<>();
 
@@ -788,6 +894,149 @@ public List<ParkingArea> getAreasByOwner(String ownerEmail) {
                 .sorted(Comparator.comparing(SlotAnalyticsDto::getValue).reversed())
                 .limit(5) // Top 5
                 .collect(Collectors.toList());
+    }
+        // Helper to Group, Sum, Sort and Limit to Top 5
+    private List<SlotAnalyticsDto> aggregateTopSlots1(List<Booking> bookings, boolean isRevenue) {
+        Map<String, SlotAnalyticsDto> map = new HashMap<>();
+
+        for (Booking b : bookings) {
+            if (b.getSlot() == null) continue;
+            String slotNum = b.getSlot().getSlotNumber();
+            
+            // Initialize map entry if missing
+            map.putIfAbsent(slotNum, SlotAnalyticsDto.builder()
+                    .slotNumber(slotNum)
+                    .value(0.0)
+                    .bookingCount(0L)
+                    .build());
+
+            SlotAnalyticsDto dto = map.get(slotNum);
+            dto.setBookingCount(dto.getBookingCount() + 1);
+
+            if (isRevenue) {
+                // Sum Money (Paid + Pending)
+                double amt = (b.getAmountPaid() != null ? b.getAmountPaid() : 0.0) + 
+                             (b.getAmountPending() != null ? b.getAmountPending() : 0.0);
+                dto.setValue(dto.getValue() + amt);
+            } else {
+                // Sum Time (Hours)
+                double hours = 0.0;
+                
+                // 1. Reservation Duration
+                if (b.getReservationTime() != null) {
+                    LocalDateTime endRes = b.getArrivalTime() != null ? b.getArrivalTime() : 
+                                         (b.getExpectedEndTime() != null ? b.getExpectedEndTime() : LocalDateTime.now());
+                    
+                    // Real Time Logic: Minutes / 60.0
+                    hours += Duration.between(b.getReservationTime(), endRes).toMinutes() / 60.0;
+                }
+                
+                // 2. Parking Duration
+                if (b.getArrivalTime() != null) {
+                    LocalDateTime endPark = b.getDepartureTime() != null ? b.getDepartureTime() : LocalDateTime.now();
+                    
+                    // Real Time Logic: Minutes / 60.0
+                    hours += Duration.between(b.getArrivalTime(), endPark).toMinutes() / 60.0;
+                }
+                
+                dto.setValue(dto.getValue() + hours);
+            }
+        }
+
+        // Sort Descending and Pick Top 5
+        return map.values().stream()
+                .sorted(Comparator.comparing(SlotAnalyticsDto::getValue).reversed())
+                .limit(5)
+                .collect(Collectors.toList());
+    }
+
+   
+
+    public AnalyticsChartDto getAnalyticsCharts(Long areaId, String userEmail) {
+        // 1. Fetch User and Area
+        User loggedInUser = userRepository.findByEmailOrPhone(userEmail, userEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        ParkingArea area = parkingAreaRepository.findById(areaId)
+                .orElseThrow(() -> new RuntimeException("Area not found"));
+
+        // 2. SECURITY FIX: Allow if user is Owner OR Admin
+        if (loggedInUser.getRole() != UserRole.ADMIN && 
+            !Objects.equals(area.getAreaOwner().getUserId(), loggedInUser.getUserId())) {
+            throw new RuntimeException("Access Denied: You do not have permission to view this area.");
+        }
+
+        List<Booking> bookings = bookingRepository.findByArea_AreaId(areaId);
+        LocalDateTime now = LocalDateTime.now();
+
+        // 3. Generate Hourly Data (Last 24 Hours)
+        List<AnalyticsChartDto.DataPoint> hourly = new ArrayList<>();
+        for (int i = 23; i >= 0; i--) {
+            LocalDateTime startWindow = now.minusHours(i);
+            LocalDateTime endWindow = startWindow.plusHours(1);
+            
+            List<Booking> bucket = bookings.stream()
+                .filter(b -> {
+                    LocalDateTime time = b.getBookingTime() != null ? b.getBookingTime() : b.getReservationTime();
+                    return time != null && (time.isEqual(startWindow) || time.isAfter(startWindow)) && time.isBefore(endWindow);
+                })
+                .collect(Collectors.toList());
+
+            hourly.add(calculateDataPoint(bucket, startWindow.format(DateTimeFormatter.ofPattern("HH:00"))));
+        }
+
+        // 4. Generate Daily Data (Last 30 Days)
+        List<AnalyticsChartDto.DataPoint> daily = new ArrayList<>();
+        for (int i = 29; i >= 0; i--) {
+            LocalDateTime startDay = now.minusDays(i).withHour(0).withMinute(0);
+            LocalDateTime endDay = startDay.plusDays(1);
+
+            List<Booking> bucket = bookings.stream()
+                .filter(b -> {
+                    LocalDateTime time = b.getBookingTime() != null ? b.getBookingTime() : b.getReservationTime();
+                    return time != null && (time.isEqual(startDay) || time.isAfter(startDay)) && time.isBefore(endDay);
+                })
+                .collect(Collectors.toList());
+
+            daily.add(calculateDataPoint(bucket, startDay.format(DateTimeFormatter.ofPattern("dd MMM"))));
+        }
+
+        return AnalyticsChartDto.builder().hourlyData(hourly).dailyData(daily).build();
+    }
+
+    // Helper Math Logic
+    private AnalyticsChartDto.DataPoint calculateDataPoint(List<Booking> bucket, String label) {
+        double revenue = 0.0;
+        double totalDuration = 0.0;
+        long count = bucket.size();
+
+        for (Booking b : bucket) {
+            // Revenue
+            double paid = b.getAmountPaid() != null ? b.getAmountPaid() : 0.0;
+            double pending = b.getAmountPending() != null ? b.getAmountPending() : 0.0;
+            revenue += (paid + pending);
+
+            // Duration (Fast Mode: 1 Real Sec = 1 Virtual Min -> / 60.0 for Hours)
+            // Or Real Mode: Minutes / 60.0
+            // Assuming Real Mode based on previous fix
+            LocalDateTime start = b.getReservationTime();
+            LocalDateTime end = b.getDepartureTime() != null ? b.getDepartureTime() : 
+                               (b.getArrivalTime() != null ? b.getArrivalTime() : start);
+            
+            if(start != null && end != null) {
+                long minutes = Duration.between(start, end).toMinutes();
+                totalDuration += (minutes / 60.0);
+            }
+        }
+
+        double avgDuration = count > 0 ? (totalDuration / count) : 0.0;
+
+        return AnalyticsChartDto.DataPoint.builder()
+                .label(label)
+                .bookingCount(count)
+                .revenue(revenue)
+                .avgDurationHrs(Math.round(avgDuration * 100.0) / 100.0)
+                .build();
     }
 
 

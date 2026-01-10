@@ -36,7 +36,5 @@ public class OutstandingDue {
     @CreationTimestamp
     private LocalDateTime createdAt;
     
-    // Note: We removed the recursive 'previousOutstandingDue' fields.
-    // To get total dues, use Repository: 
-    // outstandingDueRepository.sumAmountByUserIdAndIsPaidFalse(userId);
+    
 }

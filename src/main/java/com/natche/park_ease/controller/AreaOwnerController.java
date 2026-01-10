@@ -11,7 +11,11 @@ import com.natche.park_ease.dto.response.AreaBookingLogDto;
 import com.natche.park_ease.dto.response.GuardDto;
 import com.natche.park_ease.dto.response.ParkingAreaDto;
 import com.natche.park_ease.entity.ParkingArea;
+import com.natche.park_ease.entity.User;
+import com.natche.park_ease.enums.UserRole;
+import com.natche.park_ease.repository.ParkingAreaRepository;
 import com.natche.park_ease.repository.ParkingSlotRepository;
+import com.natche.park_ease.repository.UserRepository;
 import com.natche.park_ease.service.AreaOwnerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -29,13 +33,17 @@ public class AreaOwnerController {
 
      @Autowired
     private ParkingSlotRepository slotRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private AreaOwnerService areaOwnerService;
+    @Autowired
+    private ParkingAreaRepository parkingAreaRepository;
 
     // 1. Recruit Guard (Promote or Create)
     @PostMapping("/recruit-guard")
-     @PreAuthorize("hasRole('AREA_OWNER') or hasRole('ADMIN')")
+     @PreAuthorize("hasRole('AREA_OWNER') ")
     public ResponseEntity<?> recruitGuard(@RequestBody GuardRegisterRequest request, Principal principal) {
         try {
             System.out.println(request.getName()+request.getEmail()+ request.getPassword()+ request.getAreaId());
@@ -48,7 +56,7 @@ public class AreaOwnerController {
 
     // 2. Fire Guard
     @PostMapping("/fire-guard/{guardUserId}")
-   @PreAuthorize("hasRole('AREA_OWNER') or hasRole('ADMIN')")
+   @PreAuthorize("hasRole('AREA_OWNER') ")
     public ResponseEntity<?> fireGuard(@PathVariable Long guardUserId, Principal principal) {
         try {
             areaOwnerService.fireGuard(guardUserId, principal.getName());
@@ -60,7 +68,7 @@ public class AreaOwnerController {
 
     // 3. Create Parking Area
     @PostMapping("/create-area")
-     @PreAuthorize("hasRole('AREA_OWNER') or hasRole('ADMIN')")
+     @PreAuthorize("hasRole('AREA_OWNER') ")
     public ResponseEntity<?> createParkingArea(@RequestBody CreateParkingAreaRequest request, Principal principal) {
         try {
             ParkingArea area = areaOwnerService.createParkingArea(request, principal.getName());
@@ -99,7 +107,15 @@ public class AreaOwnerController {
     @PreAuthorize("hasRole('AREA_OWNER') or hasRole('ADMIN')")
     public ResponseEntity<?> getMyAreas(Principal principal) {
         try {
-            List<ParkingArea> areas = areaOwnerService.getAreasByOwner(principal.getName());
+            String ownerEmail = principal.getName();
+             User loggedInOwner = userRepository.findByEmailOrPhone(ownerEmail, ownerEmail).orElseThrow();
+             List<ParkingArea> areas;
+             if(loggedInOwner.getRole()==UserRole.ADMIN){
+                areas = parkingAreaRepository.findAll();
+             }else{
+
+                 areas = areaOwnerService.getAreasByOwner(principal.getName());
+             }
             
             // CONVERT TO DTO TO FIX SERIALIZATION ERROR
             List<ParkingAreaDto> dtos = areas.stream()
@@ -169,6 +185,16 @@ public class AreaOwnerController {
     public ResponseEntity<?> getSlotPerformance(@PathVariable Long areaId, Principal principal) {
         try {
             return ResponseEntity.ok(areaOwnerService.getSlotAnalytics(areaId, principal.getName()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/area/{areaId}/analytics/charts")
+    @PreAuthorize("hasRole('AREA_OWNER') or hasRole('ADMIN')")
+    public ResponseEntity<?> getChartsData(@PathVariable Long areaId, Principal principal) {
+        try {
+            return ResponseEntity.ok(areaOwnerService.getAnalyticsCharts(areaId, principal.getName()));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

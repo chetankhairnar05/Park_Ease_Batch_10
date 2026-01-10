@@ -25,6 +25,5 @@ public class Guard {
     @JoinColumn(name = "area_id", nullable = false)
     private ParkingArea parkingArea;
     
-    // You can add guard-specific fields here later
-    // e.g., shiftTiming, employeeId, etc.
+    
 }

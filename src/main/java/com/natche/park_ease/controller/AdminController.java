@@ -5,18 +5,29 @@ admin can create area owner and other admins , we have already created admin nam
 package com.natche.park_ease.controller;
 
 import com.natche.park_ease.dto.StaffRegisterRequest;
+import com.natche.park_ease.dto.response.AreaBookingLogDto;
+import com.natche.park_ease.dto.response.AreaStatisticsDto;
 import com.natche.park_ease.dto.response.UserProfileDto;
+import com.natche.park_ease.entity.ParkingArea;
 import com.natche.park_ease.entity.User;
 import com.natche.park_ease.enums.UserRole;
+import com.natche.park_ease.repository.ParkingAreaRepository;
 import com.natche.park_ease.repository.UserRepository;
+import com.natche.park_ease.service.AdminService;
+import com.natche.park_ease.service.AreaOwnerService;
 
+import java.security.Principal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 // import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,6 +45,16 @@ public class AdminController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+     @Autowired
+    private ParkingAreaRepository parkingAreaRepository;
+
+    @Autowired
+    private AreaOwnerService areaOwnerService; // Reuse existing service logic
+
+     @Autowired
+    private AdminService adminService; // ✅ Inject AdminService
+
 
     
     @PostMapping("/create-staff")
@@ -153,7 +174,52 @@ public class AdminController {
 
         return ResponseEntity.ok(Map.of("message", "User " + user.getName() + " has been approved successfully."));
     }
+
+
+        // 3. Get Global Area Analytics (Using AdminService)
+    @GetMapping("/analytics/all-areas")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Map<String, Object>>> getAllAreaAnalytics(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start, 
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
+        
+        List<ParkingArea> allAreas = parkingAreaRepository.findAll();
+        List<Map<String, Object>> response = new ArrayList<>();
+
+        for (ParkingArea area : allAreas) {
+            // ✅ Use AdminService (No ownership check required)
+            AreaStatisticsDto stats = adminService.getAreaStatistics(area.getAreaId(), start, end);
+            
+            Map<String, Object> row = new HashMap<>();
+            row.put("areaId", area.getAreaId());
+            row.put("name", area.getName());
+            row.put("owner", area.getAreaOwner().getName());
+            row.put("totalEarnings", stats.getTotalEarnings());
+            row.put("activeBookings", stats.getActiveBookings());
+            row.put("totalBookings", stats.getTotalBookings());
+            row.put("completed", stats.getCompletedBookings());
+            row.put("cancelled", stats.getCancelledBookings());
+            
+            // Calculate Avg Duration
+            long total = stats.getTotalBookings() > 0 ? stats.getTotalBookings() : 1;
+            row.put("avgDuration", (stats.getTotalReservationHours() + stats.getTotalParkingHours()) / total);
+            
+            response.add(row);
+        }
+        return ResponseEntity.ok(response);
+    }
     
+    // 4. Get Chart Data (Using AdminService)
+    @GetMapping("/analytics/area/{areaId}/charts")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getAreaCharts(
+            @PathVariable Long areaId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start, 
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
+        
+        // ✅ Use AdminService
+        return ResponseEntity.ok(adminService.getAnalyticsCharts(areaId, start, end));
+    }
 }
 
 // DTO for this request

@@ -23,7 +23,7 @@ public class Payment {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private User user; // We need to know WHO paid
+    private User user; 
 
     @ManyToOne
     @JoinColumn(name = "booking_id", nullable = true) // Nullable for Top-ups

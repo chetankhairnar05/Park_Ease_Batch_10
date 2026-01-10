@@ -34,7 +34,6 @@ public class CustomUserDetails implements UserDetails {
         return user.getEmail(); // Or use phone, whichever is your primary login
     }
 
-    // --- The "Rapido Model" Logic ---
 
     @Override
     public boolean isAccountNonLocked() {
