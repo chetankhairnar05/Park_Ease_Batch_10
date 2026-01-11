@@ -156,6 +156,7 @@ public class AreaOwnerController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+        
     }
 
     @PostMapping("/area/{areaId}/slots/create")

@@ -815,6 +815,7 @@ public List<ParkingArea> getAreasByOwner(String ownerEmail) {
                 .build();
     }
 
+    
    
     public FullAnalyticsResponse getSlotAnalytics1(Long areaId, String ownerEmail) {
         // 1. Verify Access

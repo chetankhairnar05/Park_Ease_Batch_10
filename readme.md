@@ -3,14 +3,13 @@
 **project demo link**
 
 ```
-https://youtu.be/2cw4J_ufOms
-
+https://www.youtube.com/watch?v=QkjYBcf5kv0
 ```
 
 **Spring Boot Internship Project**
 
 Park Ease is a **production-grade Smart Parking Management System** built using **Spring Boot 3**, designed to simulate real-world urban parking operations.
-It digitizes the complete parking lifecycle—from **remote booking** to **cashless exit**—while supporting **multiple roles**, **dynamic pricing**, **wallet-based payments**, and **real-time updates**.
+It digitizes the complete parking lifecycle—from **remote booking** to **cashless exit**—while supporting **multiple roles**, **dynamic pricing**, **wallet-based payments**, **real-time updates**, **analytics**, and **audit-grade reporting**.
 
 ---
 
@@ -18,11 +17,14 @@ It digitizes the complete parking lifecycle—from **remote booking** to **cashl
 
 - Stateless **JWT-based Authentication**
 - Role-Based Access Control (**ADMIN, AREA_OWNER, GUARD, DRIVER**)
-- **FAST MODE simulation** (1 second = 1 minute)
 - Real-time updates using **WebSocket (STOMP)**
 - Automated **Indore city data seeding**
 - Wallet + Outstanding Due system (FASTag model)
 - Vehicle-slot compatibility enforcement
+- **Platform-wide & area-level analytics dashboards**
+- **CSV-based reporting for admins, owners, and drivers**
+- **Audit logs for all booking and payment activities**
+- **Approval-based staff onboarding workflow**
 - Production-ready architecture (Service / Repository / DTO layers)
 
 ---
@@ -86,42 +88,35 @@ Run:
 ParkEaseApplication.java
 ```
 
-# recommended
+**Recommended**
 
-```
+```bash
 git clone https://github.com/chetankhairnar05/Park_Ease_Batch_10.git
-
 cd Park_Ease_Batch_10
-
 .\mvnw.cmd spring-boot:run
-# in windows cmd
-
 ```
 
-On first startup, **AdminSeeder** automatically populates the database.
+On first startup, **AdminSeeder** automatically populates the database with users, areas, slots, guards, vehicles, and pricing data.
+
+---
 
 ### Frontend
 
 Open:
 
-method 1:
+**Method 1**
 
 ```
 http://localhost:8080/auth.html
 ```
 
-method2:
+**Method 2 (Recommended for JS support)**
 
-using live server
-
-install live server vs code extention else javascript will not work
+Use **Live Server** in VS Code:
 
 ```
 frontend1/auth.html
-#open this using live server
 ```
-
-using **Live Server** (VS Code) or any static server.
 
 ---
 
@@ -131,6 +126,8 @@ using **Live Server** (VS Code) or any static server.
 
 **Common Password:** `1234`
 
+---
+
 ## 👤 Admin Accounts
 
 | Role  | Email                                       | Password |
@@ -138,6 +135,8 @@ using **Live Server** (VS Code) or any static server.
 | ADMIN | [admin1@gmail.com](mailto:admin1@gmail.com) | 1234     |
 | ADMIN | [admin2@gmail.com](mailto:admin2@gmail.com) | 1234     |
 | ADMIN | [admin3@gmail.com](mailto:admin3@gmail.com) | 1234     |
+
+Admins have **platform-wide visibility**, including analytics, revenue reports, and approval controls.
 
 ---
 
@@ -149,7 +148,11 @@ using **Live Server** (VS Code) or any static server.
 | AREA_OWNER | [owner2@gmail.com](mailto:owner2@gmail.com) | 1234     |
 | AREA_OWNER | [owner3@gmail.com](mailto:owner3@gmail.com) | 1234     |
 
-Each Area Owner controls **2 parking areas**.
+Each Area Owner:
+
+- Controls **2 parking areas**
+- Manages slots, guards, and pricing
+- Accesses **area-specific analytics**, **audit logs**, and **CSV exports**
 
 ---
 
@@ -161,7 +164,11 @@ Each Area Owner controls **2 parking areas**.
 | DRIVER | [user2@gmail.com](mailto:user2@gmail.com) | 1234     | ₹2000  |
 | DRIVER | [user3@gmail.com](mailto:user3@gmail.com) | 1234     | ₹2000  |
 
-Each driver has **2 vehicles**, one marked as **Primary**.
+Each driver:
+
+- Owns **2 vehicles**
+- One vehicle marked as **Primary**
+- Can view **active sessions**, **booking history**, and **export CSV reports**
 
 ---
 
@@ -175,14 +182,9 @@ Guards are auto-created **per parking area**.
 guard{AreaId}_{Number}@gmail.com
 ```
 
-Example:
-
-```
-guard1_1@gmail.com
-guard1_2@gmail.com
-```
-
 **Password:** `1234`
+
+Guards can verify entry, monitor parking, and force-end sessions when required.
 
 ---
 
@@ -200,126 +202,135 @@ X-Auth-Token: <JWT>
 
 ### Role Capabilities
 
-| Role       | Capabilities                    |
-| ---------- | ------------------------------- |
-| ADMIN      | Create Area Owners              |
-| AREA_OWNER | Manage areas, slots, guards     |
-| GUARD      | Verify entry, force-end parking |
-| DRIVER     | Book, park, pay                 |
+| Role       | Capabilities                                  |
+| ---------- | --------------------------------------------- |
+| ADMIN      | Platform analytics, owner approval, reporting |
+| AREA_OWNER | Area & slot management, guard control, logs   |
+| GUARD      | Entry verification, forced exit               |
+| DRIVER     | Booking, parking, wallet payments             |
 
 ---
 
-## ⏱️ FAST MODE (IMPORTANT)
+## 📊 Analytics & Reporting
 
-### ⚡ Time Acceleration Logic
+- **Admin Dashboard**
 
-```
-1 Real Second = 1 Virtual Minute
-```
+  - Total platform revenue
+  - Booking statistics (Active / Completed / Cancelled)
+  - Average parking duration
+  - Area-wise performance table
+  - Drill-down analytics per area
+  - Date-range filtering
+  - CSV export
 
-### Why FAST MODE?
+- **Area Owner Dashboard**
 
-To **demonstrate real parking behavior quickly** during testing and evaluation.
-
-| Feature         | Real World | Park Ease  |
-| --------------- | ---------- | ---------- |
-| Grace Period    | 10 minutes | 10 seconds |
-| Parking Time    | 60 minutes | 60 seconds |
-| No-show Timeout | 30 minutes | 30 seconds |
-
-Implemented in **BookingService** using `Duration.toSeconds()`.
+  - Revenue & booking trends (24 hours / 30 days)
+  - Top-performing slots by revenue and occupancy
+  - Downloadable booking and payment logs
 
 ---
 
-# 🚘 Booking Lifecycle (State Machine)
+## 🧾 Audit Logs
 
-## 1️⃣ Reservation (Remote Booking)
+- Chronological booking logs per area
+- Includes:
+
+  - Booking ID
+  - Timestamp
+  - User & vehicle details
+  - Slot number
+  - Final status
+  - Amount paid or pending
+
+- Exportable CSV reports for audits and reconciliation
+
+---
+
+## 👥 Staff Management
+
+- Admins and Area Owners are created in a **Disabled** state
+- Super Admin approval required before access
+- Area Owners can recruit guards using email or phone
+- Existing users are promoted automatically
+- Strict ownership enforcement for security
+
+---
+
+## 🚘 Booking Lifecycle
+
+### 1️⃣ Reservation
 
 - Status: `RESERVED`
-- Slot marked as `RESERVED`
-- Grace Period: **10 virtual minutes**
-- Auto-cancel after **30 virtual minutes** (Scheduler)
+- Grace period applied
+- Auto-cancel on no-show
 
----
-
-## 2️⃣ Arrival (QR Scan)
+### 2️⃣ Arrival
 
 - Status → `ACTIVE_PARKING`
-- Parking timer starts
-- Reservation fee waived if arrival ≤ grace time
+- Timer starts
+- Reservation fee waived if on time
 
----
-
-## 3️⃣ Exit & Payment
-
-- User clicks **Stop & Pay**
-- Bill calculation:
+### 3️⃣ Exit & Payment
 
 ```
 Reservation Fee + Parking Fee + Pending Dues
 ```
 
-- Wallet deducted
+- Wallet auto-deduction
+- Outstanding dues tracked
 - Slot released
-- Status → `COMPLETED`
 - Exit token generated
 
 ---
 
-# 💳 Wallet & Due System (FASTag Model)
+## 💳 Wallet & Due System
 
-- Drivers maintain a **prepaid wallet**
-- Automatic deduction on exit
-- If payment fails:
-
-  - Booking marked unpaid
-  - Amount added to **Outstanding Due**
-  - User blocked from new bookings until dues are cleared
+- Prepaid wallet per driver
+- Automatic billing on exit
+- Failed payment → Outstanding Due
+- Users blocked from new bookings until cleared
 
 ---
 
-# 🚙 Vehicle & Slot Logic
+## 🚙 Vehicle & Slot Logic
 
-- Vehicles supported: **SMALL, MEDIUM, LARGE**
-- Slot compatibility enforced:
-
-  - SUV ❌ Small Slot
-  - Bike ✔ Large Slot
-
-- One vehicle marked as **Primary** for faster booking
+- Vehicle types: **SMALL, MEDIUM, LARGE**
+- Slot compatibility enforced
+- Primary vehicle supported for quick booking
 
 ---
 
-# 🧩 Real-Time Communication (WebSocket)
+## 🧩 Real-Time Communication
 
-- Slot updates broadcast to:
+- Slot updates:
 
 ```
 /topic/area/{areaId}/slots
 ```
 
-- User booking updates sent to:
+- Booking updates:
 
 ```
 /user/queue/booking-updates
 ```
 
-DTOs are used to prevent infinite serialization recursion.
+DTO-based messaging prevents serialization recursion.
 
 ---
 
-# 🧪 Technology Stack
+## 🧪 Technology Stack
 
-| Layer    | Technology              |
-| -------- | ----------------------- |
-| Backend  | Spring Boot 3.5.8       |
-| Language | Java 21                 |
-| ORM      | Hibernate / JPA         |
-| Database | MySQL 8                 |
-| Security | Spring Security 6 + JWT |
-| Realtime | WebSocket (STOMP)       |
-| API Docs | SpringDoc OpenAPI       |
-| Frontend | HTML, Tailwind CSS, JS  |
+| Layer     | Technology              |
+| --------- | ----------------------- |
+| Backend   | Spring Boot 3.5.8       |
+| Language  | Java 21                 |
+| ORM       | Hibernate / JPA         |
+| Database  | MySQL 8                 |
+| Security  | Spring Security 6 + JWT |
+| Realtime  | WebSocket (STOMP)       |
+| Analytics | Chart.js                |
+| Frontend  | HTML, Tailwind CSS, JS  |
 
 ---
 
@@ -327,8 +338,10 @@ DTOs are used to prevent infinite serialization recursion.
 
 Park Ease demonstrates **real-world backend engineering practices**, including:
 
-- Secure authentication
-- Scalable layered architecture
-- Transaction safety
-- Real-time communication
-- Business rule enforcement
+- Secure authentication & authorization
+- Analytics-driven system design
+- Audit-ready financial workflows
+- Real-time state synchronization
+- Scalable, maintainable architecture
+
+---
