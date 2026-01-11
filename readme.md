@@ -17,7 +17,6 @@ It digitizes the complete parking lifecycle—from **remote booking** to **cashl
 
 - Stateless **JWT-based Authentication**
 - Role-Based Access Control (**ADMIN, AREA_OWNER, GUARD, DRIVER**)
-- Real-time updates using **WebSocket (STOMP)**
 - Automated **Indore city data seeding**
 - Wallet + Outstanding Due system (FASTag model)
 - Vehicle-slot compatibility enforcement
@@ -328,7 +327,6 @@ DTO-based messaging prevents serialization recursion.
 | ORM       | Hibernate / JPA         |
 | Database  | MySQL 8                 |
 | Security  | Spring Security 6 + JWT |
-| Realtime  | WebSocket (STOMP)       |
 | Analytics | Chart.js                |
 | Frontend  | HTML, Tailwind CSS, JS  |
 
