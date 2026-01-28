@@ -1,0 +1,97 @@
+##################################
+# OS / System
+##################################
+.DS_Store
+Thumbs.db
+
+##################################
+# Logs
+##################################
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+##################################
+# Node / Frontend
+##################################
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+##################################
+# Java / Spring Boot / Maven / Gradle
+##################################
+target/
+build/
+
+!**/src/main/**/target/
+!**/src/test/**/target/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+##################################
+# IDEs & Editors
+##################################
+.vscode/*
+!.vscode/extensions.json
+
+.idea/
+*.iws
+*.iml
+*.ipr
+
+.classpath
+.project
+.settings/
+.springBeans
+.sts4-cache
+.factorypath
+.apt_generated
+
+##################################
+# NetBeans
+##################################
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+##################################
+# Environment / Config
+##################################
+*.env
+application.properties
+src/main/resources/application.properties
+
+##################################
+# Generated / Local files
+##################################
+HELP.md
+generate_repos.sh
+a1.txt
+
+##################################
+# Frontend folders inside backend (old/test)
+##################################
+backend/**/frontend/
+backend/**/frontend1/
+backend/**/frontend2/
+backend/**/frontend-latest/
+backend/**/test-frontend/
+
+##################################
+# Static HTML test files
+##################################
+*booking*.html
+*dashboard*.html
+*active-bookings*.html
+
+##################################
+# Git
+##################################
+.gitattributes
