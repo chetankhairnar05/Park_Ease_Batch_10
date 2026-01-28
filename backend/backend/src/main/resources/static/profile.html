@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Park Ease - Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 min-h-screen flex justify-center">
+    <div
+      class="w-full max-w-md bg-white min-h-screen shadow-2xl relative flex flex-col pb-20"
+    >
+      <!-- Header -->
+      <header class="bg-white p-6 shadow-sm z-10 border-b border-gray-100">
+        <h1 class="text-xl font-bold text-gray-900">My Profile</h1>
+      </header>
+
+      <div class="p-6 space-y-8 overflow-y-auto flex-1">
+        <!-- User Info -->
+        <div class="flex items-center gap-4 bg-gray-200 py-2 px-2 rounded-3xl">
+          <div
+            class="h-14 w-14 bg-indigo-300 text-indigo-900 rounded-full flex items-center justify-center text-2xl font-bold border-2 border-indigo-50"
+          >
+            <span id="p-initial">U</span>
+          </div>
+          <div>
+            <h2
+              id="p-name"
+              class="text-lg font-bold text-gray-900 leading-tight"
+            >
+              Loading...
+            </h2>
+            <p id="p-email" class="text-sm font-bold text-gray-900">...</p>
+            <p id="p-phone" class="text-sm font-bold text-gray-900">...</p>
+            <span
+              id="p-role"
+              class="text-[13px] bg-gray-300 text-gray-900 px-2 py-0.5 rounded font-bold uppercase mt-1 inline-block"
+              >DRIVER</span
+            >
+          </div>
+        </div>
+
+        <!-- Wallet -->
+        <div
+          class="bg-gray-900 rounded-2xl p-5 text-white shadow-xl only-driver"
+        >
+          <p class="text-xs text-gray-400 mb-1">Wallet Balance</p>
+          <div class="text-3xl font-bold mb-4">
+            ₹<span id="p-wallet">0.00</span>
+          </div>
+          <div class="flex gap-2">
+            <input
+              id="topup-amt"
+              type="number"
+              class="bg-gray-800 border-none rounded text-sm w-full px-3 py-2 text-white placeholder-gray-500"
+              placeholder="Amount"
+            />
+            <button
+              onclick="topUp()"
+              class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-sm font-bold"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+
+        <!-- Location -->
+        <div class="only-driver bg-gray-300 px-3 py-3 rounded-2xl">
+          <h3 class="font-bold text-black text-sm mb-3">Location Settings</h3>
+          <div class="space-y-2">
+            <div class="flex gap-2">
+              <div>
+                <label class="font-bold text-xs">Lattitude</label>
+                <input
+                  id="loc-lat"
+                  class="bg-gray-50 border border-gray-200 rounded text-xs p-2 w-full"
+                  placeholder="Latitude"
+                />
+              </div>
+              <div>
+                <label class="font-bold text-xs">Longitude</label>
+                <input
+                  id="loc-lon"
+                  class="bg-gray-50 border border-gray-200 rounded text-xs p-2 w-full"
+                  placeholder="Longitude"
+                />
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button
+                onclick="updateLoc()"
+                class="flex-1 bg-white border border-gray-300 text-gray-700 py-2 rounded-lg text-xs font-bold hover:bg-gray-50"
+              >
+                Save Coords
+              </button>
+              <button
+                onclick="geoLocate()"
+                class="flex-1 text-indigo-600 text-md font-extrabold underline"
+              >
+                Auto-Detect GPS
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vehicles -->
+        <div class="only-driver bg-gray-400 px-3 py-4 rounded-2xl">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="font-bold text-gray-900 text-sm">My Vehicles</h3>
+            <a
+              href="vehicle-register.html"
+              class="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded font-bold"
+              >+ Add</a
+            >
+          </div>
+          <div id="v-list" class="space-y-2">
+            <p class="text-xs text-center text-gray-400 py-2">Loading...</p>
+          </div>
+        </div>
+
+        <button
+          onclick="logout()"
+          class="w-full text-red-950 text-sm font-bold border border-red-300 bg-red-300 py-3 rounded-xl hover:bg-red-200"
+        >
+          Sign Out
+        </button>
+      </div>
+
+      <!-- Bottom Navigation -->
+      <div
+        class="fixed bottom-0 w-full max-w-md bg-white border-t border-gray-100 p-2 flex justify-around items-center text-xs font-medium text-gray-400 z-50"
+      >
+        <a
+          href="dashboard.html"
+          class="flex flex-col items-center p-2 hover:text-indigo-600 transition"
+        >
+          <svg
+            class="w-6 h-6 mb-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+            />
+          </svg>
+          Home
+        </a>
+        <a
+          href="slots.html"
+          class="flex flex-col items-center p-2 hover:text-indigo-600 transition only-driver"
+        >
+          <svg
+            class="w-6 h-6 mb-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          Find
+        </a>
+        <a
+          href="active-bookings.html"
+          class="flex flex-col items-center p-2 hover:text-indigo-600 transition only-driver"
+        >
+          <svg
+            class="w-6 h-6 mb-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          Activity
+        </a>
+        <a
+          href="profile.html"
+          class="flex flex-col items-center p-2 text-indigo-600"
+        >
+          <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          Profile
+        </a>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:8080/api";
+      const token = localStorage.getItem("parkease_token");
+      if (!token) window.location.href = "auth.html";
+
+      async function init() {
+        try {
+          // Profile
+          const user = await fetchAPI("/user/profile");
+          document.getElementById("p-name").innerText = user.name;
+          document.getElementById("p-email").innerText = user.email;
+          document.getElementById("p-phone").innerText = user.phone;
+          document.getElementById("p-role").innerText = user.role;
+          document.getElementById("p-initial").innerText = user.name.charAt(0);
+          document.getElementById("p-wallet").innerText = (
+            user.walletBalance || 0
+          ).toFixed(2);
+          if (user.latitude)
+            document.getElementById("loc-lat").value = user.latitude;
+          if (user.longitude)
+            document.getElementById("loc-lon").value = user.longitude;
+
+          const driverOnlyElements = document.querySelectorAll(".only-driver");
+          if (user.role !== "DRIVER") {
+            driverOnlyElements.forEach((el) => el.classList.add("hidden"));
+          }
+
+          // Vehicles
+          const vehs = await fetchAPI("/user/vehicles");
+          const vList = document.getElementById("v-list");
+          vList.innerHTML = "";
+          if (!vehs.length)
+            vList.innerHTML =
+              '<p class="text-xs text-gray-400 text-center">No vehicles.</p>';
+
+          vehs.forEach((i) => {
+            vList.innerHTML += `
+                    <div class="bg-white p-3 rounded-lg border border-gray-100 flex justify-between items-center shadow-sm">
+                        <div>
+                            <div class="font-bold text-gray-800 text-sm">${
+                              i.vehicle.model
+                            } ${i.isPrimary ? "⭐" : ""}</div>
+                            <div class="text-xs text-gray-500 font-mono">${
+                              i.vehicle.registerNumber
+                            }</div>
+                        </div>
+                        <span class="text-[10px] bg-gray-100 px-2 py-1 rounded font-bold text-gray-600 uppercase">${
+                          i.vehicle.vehicleType
+                        }</span>
+                    </div>`;
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      async function fetchAPI(endpoint, method = "GET", body = null) {
+        const opts = {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+            "X-Auth-Token": token,
+          },
+        };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch(`${API_BASE}${endpoint}`, opts);
+        if (!res.ok) throw new Error("API Error");
+        try {
+          return res.json();
+        } catch {
+          return res.text();
+        }
+      }
+
+      // async function topUp() {
+      //   const amt = document.getElementById("topup-amt").value;
+      //   if (!amt) return;
+      //   await fetchAPI("/wallet/topup", "POST", {
+      //     amount: parseFloat(amt),
+      //     paymentMethod: "UPI",
+      //   });
+      //   alert("Wallet Updated");
+      //   init();
+      //   document.getElementById("topup-amt").value = "";
+      // }
+      async function topUp() {
+        const amt = document.getElementById("topup-amt").value;
+        if (!amt || parseFloat(amt) <= 0) {
+          alert("Please enter a valid amount");
+          return;
+        }
+
+        // Redirect to Payment Gateway Mock
+        window.location.href = `pay.html?amount=${amt}`;
+      }
+
+      async function updateLoc() {
+        const lat = document.getElementById("loc-lat").value;
+        const lon = document.getElementById("loc-lon").value;
+        await fetchAPI("/user/location", "PUT", {
+          latitude: lat,
+          longitude: lon,
+        });
+        alert("Location Saved");
+      }
+
+      function geoLocate() {
+        navigator.geolocation.getCurrentPosition((p) => {
+          document.getElementById("loc-lat").value = p.coords.latitude;
+          document.getElementById("loc-lon").value = p.coords.longitude;
+        });
+      }
+
+      function logout() {
+        localStorage.removeItem("parkease_token");
+        localStorage.removeItem("parkease_user");
+        window.location.href = "auth.html";
+      }
+
+      init();
+    </script>
+  </body>
+</html>

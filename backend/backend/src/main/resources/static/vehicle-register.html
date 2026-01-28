@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Park Ease - Register Vehicle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-lg w-full max-w-lg p-8">
+      <div class="flex items-center justify-between mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">Add Vehicle</h1>
+        <a
+          href="dashboard.html"
+          class="text-md text-gray-950 hover:text-gray-900 bg-gray-300 px-3 py-2 rounded"
+          >Cancel</a
+        >
+      </div>
+
+      <form onsubmit="registerVehicle(event)" class="space-y-6">
+        <!-- Plate -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >License Plate Number</label
+          >
+          <input
+            type="text"
+            id="v-plate"
+            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none uppercase font-mono tracking-wider"
+            placeholder="MH 02 AB 1234"
+            required
+          />
+        </div>
+
+        <!-- Model & Color -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Model</label
+            >
+            <input
+              type="text"
+              id="v-model"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="Honda City"
+              required
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Color</label
+            >
+            <input
+              type="text"
+              id="v-color"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="White"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Type -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2"
+            >Vehicle Type</label
+          >
+          <div class="grid grid-cols-3 gap-3">
+            <label class="cursor-pointer">
+              <input
+                type="radio"
+                name="v-type"
+                value="SMALL"
+                class="peer hidden"
+              />
+              <div
+                class="border rounded-lg py-3 text-center text-sm text-gray-500 bg-white peer-checked:bg-indigo-50 peer-checked:border-indigo-500 peer-checked:text-indigo-700 transition"
+              >
+                Bike
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input
+                type="radio"
+                name="v-type"
+                value="MEDIUM"
+                class="peer hidden"
+                checked
+              />
+              <div
+                class="border rounded-lg py-3 text-center text-sm text-gray-500 bg-white peer-checked:bg-indigo-50 peer-checked:border-indigo-500 peer-checked:text-indigo-700 transition"
+              >
+                Car
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input
+                type="radio"
+                name="v-type"
+                value="LARGE"
+                class="peer hidden"
+              />
+              <div
+                class="border rounded-lg py-3 text-center text-sm text-gray-500 bg-white peer-checked:bg-indigo-50 peer-checked:border-indigo-500 peer-checked:text-indigo-700 transition"
+              >
+                SUV
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Primary Toggle -->
+        <div class="flex items-center">
+          <input
+            id="v-primary"
+            type="checkbox"
+            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+          />
+          <label for="v-primary" class="ml-2 block text-sm text-gray-900">
+            Set as default vehicle for bookings
+          </label>
+        </div>
+
+        <button
+          type="submit"
+          class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition transform active:scale-95"
+        >
+          Save Vehicle
+        </button>
+      </form>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:8080/api";
+      const token = localStorage.getItem("parkease_token");
+      if (!token) window.location.href = "auth.html";
+
+      async function registerVehicle(e) {
+        e.preventDefault();
+        const btn = e.target.querySelector("button");
+        const originalText = btn.innerText;
+        btn.innerText = "Saving...";
+        btn.disabled = true;
+
+        const body = {
+          registerNumber: document.getElementById("v-plate").value,
+          model: document.getElementById("v-model").value,
+          color: document.getElementById("v-color").value,
+          type: document.querySelector('input[name="v-type"]:checked').value,
+          isPrimary: document.getElementById("v-primary").checked,
+        };
+
+        try {
+          const res = await fetch(`${API_BASE}/vehicles/register`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Auth-Token": token,
+            },
+            body: JSON.stringify(body),
+          });
+
+          if (res.ok) {
+            alert("Vehicle Registered Successfully!");
+            window.location.href = "dashboard.html";
+          } else {
+            const text = await res.text();
+            alert("Error: " + text);
+          }
+        } catch (err) {
+          alert("Connection Failed: " + err.message);
+        } finally {
+          btn.innerText = originalText;
+          btn.disabled = false;
+        }
+      }
+    </script>
+  </body>
+</html>

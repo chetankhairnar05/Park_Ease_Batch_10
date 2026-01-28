@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Park Ease - Secure Payment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-600 min-h-screen flex justify-center items-center p-4">
+    <div
+      class="w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden relative"
+    >
+      <!-- Header -->
+      <div class="bg-gray-950 p-6 text-white text-center">
+        <h2 class="text-sm font-medium text-gray-200 uppercase tracking-widest">
+          Total Payable
+        </h2>
+        <div class="text-4xl font-bold mt-2">
+          ₹<span id="display-amount">0.00</span>
+        </div>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <p class="text-xs text-gray-900 font-bold uppercase mb-2">
+          Select Payment Method
+        </p>
+
+        <!-- UPI Option -->
+        <button
+          onclick="processPayment('UPI')"
+          class="w-full flex items-center p-4 border rounded-xl hover:bg-indigo-50 hover:border-indigo-200 transition group"
+        >
+          <div
+            class="h-10 w-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 mr-4 group-hover:scale-110 transition"
+          >
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
+            </svg>
+          </div>
+          <div class="text-left">
+            <h3 class="font-bold text-gray-800">UPI / BHIM</h3>
+            <p class="text-xs text-gray-900">GooglePay, PhonePe, Paytm</p>
+          </div>
+        </button>
+
+        <!-- Card Option -->
+        <button
+          onclick="processPayment('CARD')"
+          class="w-full flex items-center p-4 border rounded-xl hover:bg-indigo-50 hover:border-indigo-200 transition group"
+        >
+          <div
+            class="h-10 w-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 mr-4 group-hover:scale-110 transition"
+          >
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+              />
+            </svg>
+          </div>
+          <div class="text-left">
+            <h3 class="font-bold text-gray-800">Credit / Debit Card</h3>
+            <p class="text-xs text-gray-900">Visa, Mastercard, RuPay</p>
+          </div>
+        </button>
+
+        <button
+          onclick="window.history.back()"
+          class="w-full text-center text-white bg-gray-900 text-sm font-bold py-3 rounded-2xl mt-4"
+        >
+          Cancel Transaction
+        </button>
+      </div>
+
+      <!-- Processing Overlay -->
+      <div
+        id="processing-overlay"
+        class="hidden absolute inset-0 bg-white/90 z-50 flex flex-col items-center justify-center"
+      >
+        <div
+          class="animate-spin rounded-full h-12 w-12 border-4 border-indigo-200 border-t-indigo-600 mb-4"
+        ></div>
+        <h3 class="font-bold text-gray-800">Processing Payment...</h3>
+        <p class="text-xs text-gray-500">Please do not close this window</p>
+      </div>
+
+      <!-- Success Overlay -->
+      <div
+        id="success-overlay"
+        class="hidden absolute inset-0 bg-white z-50 flex flex-col items-center justify-center"
+      >
+        <div
+          class="h-16 w-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-3xl mb-4 animate-bounce"
+        >
+          ✓
+        </div>
+        <h3 class="text-xl font-bold text-gray-800">Payment Successful!</h3>
+        <p class="text-sm text-gray-500 mt-2">Redirecting to profile...</p>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:8080/api"; // Update to Railway URL for production
+      const token = localStorage.getItem("parkease_token");
+      const urlParams = new URLSearchParams(window.location.search);
+      const amount = parseFloat(urlParams.get("amount"));
+
+      if (!token) window.location.href = "auth.html";
+      if (!amount || isNaN(amount)) {
+        alert("Invalid amount");
+        window.location.href = "profile.html";
+      }
+
+      document.getElementById("display-amount").innerText = amount.toFixed(2);
+
+      async function processPayment(method) {
+        // Show Loader
+        document
+          .getElementById("processing-overlay")
+          .classList.remove("hidden");
+
+        // Simulate 2 second delay for "Gateway" feel
+        await new Promise((r) => setTimeout(r, 2000));
+
+        try {
+          // Actual Backend Call
+          const res = await fetch(`${API_BASE}/wallet/topup`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Auth-Token": token,
+            },
+            body: JSON.stringify({
+              amount: amount,
+              paymentMethod: method === "CARD" ? "CARD" : "UPI",
+            }),
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) throw new Error(data.message || "Payment Failed");
+
+          // Show Success
+          document.getElementById("processing-overlay").classList.add("hidden");
+          document.getElementById("success-overlay").classList.remove("hidden");
+
+          // Redirect
+          setTimeout(() => {
+            window.location.href = "profile.html";
+          }, 2000);
+        } catch (err) {
+          document.getElementById("processing-overlay").classList.add("hidden");
+          alert(err.message);
+        }
+      }
+    </script>
+  </body>
+</html>

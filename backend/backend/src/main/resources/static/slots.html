@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Park Ease - Find Spots</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Leaflet -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      #map {
+        z-index: 0;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-800 min-h-screen flex justify-center">
+    <div
+      class="w-full max-w-md bg-white min-h-screen shadow-2xl relative flex flex-col pb-20"
+    >
+
+
+      <!-- Header -->
+      <header class="bg-white p-3 shadow-sm z-20 sticky top-0">
+        <h1 class="font-bold text-gray-800 shrink-0 pl-3">Find Parking</h1>
+        <div class="flex gap-3 items-center">
+          <!-- Search Bar -->
+          <div class="flex-1 relative">
+            <input
+              type="text"
+              id="search-input"
+              onkeyup="filterParking()"
+              placeholder="Search area or address..."
+              class="w-full bg-gray-100 text-xs px-4 py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <div class="absolute right-3 top-2 text-gray-400">
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+          </div>
+
+          <button
+            onclick="findAllParking()"
+            class="text-xs bg-indigo-600 text-white px-3 py-2 rounded-full font-bold shadow hover:bg-indigo-700 flex items-center gap-1 shrink-0"
+          >
+            <svg
+              class="w-3 h-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            Refresh
+          </button>
+        </div>
+      </header>
+      <!-- Map -->
+      <div id="map" class="w-full h-[450px] bg-gray-200 z-0"></div>
+
+      <!-- Results List -->
+      <div
+        class="flex-1 bg-gray-600 p-4 overflow-y-auto rounded-t-3xl -mt-4 relative z-10"
+      >
+        <div class="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
+
+        <div
+          id="parking-loading"
+          class="text-center py-10 text-gray-400 text-sm"
+        >
+          Searching nearby...
+        </div>
+        <div id="parking-results" class="space-y-4 hidden"></div>
+      </div>
+
+      <!-- Bottom Navigation -->
+      <div
+        class="fixed bottom-0 w-full max-w-md bg-white border-t border-gray-100 p-2 flex justify-around items-center text-xs font-medium text-gray-400 z-50"
+      >
+        <a
+          href="dashboard.html"
+          class="flex flex-col items-center p-2 hover:text-indigo-600 transition"
+        >
+          <svg
+            class="w-6 h-6 mb-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+            />
+          </svg>
+          Home
+        </a>
+        <a
+          href="slots.html"
+          class="flex flex-col items-center p-2 text-indigo-600"
+        >
+          <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          Find
+        </a>
+        <a
+          href="active-bookings.html"
+          class="flex flex-col items-center p-2 hover:text-indigo-600 transition"
+        >
+          <svg
+            class="w-6 h-6 mb-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          Activity
+        </a>
+        <a
+          href="profile.html"
+          class="flex flex-col items-center p-2 hover:text-indigo-600 transition"
+        >
+          <svg
+            class="w-6 h-6 mb-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            />
+          </svg>
+          Profile
+        </a>
+      </div>
+    </div>
+
+    <!-- Slots Modal (Popup) -->
+    <div
+      id="slots-modal"
+      class="hidden fixed inset-0 bg-black/50 z-50 flex items-end justify-center sm:items-center p-4 backdrop-blur-sm"
+    >
+      <div
+        class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col"
+      >
+        <div class="p-4 border-b flex justify-between items-center bg-gray-50">
+          <div>
+            <h2 class="font-bold text-gray-800" id="modal-area-name">Area</h2>
+            <p class="text-xs text-gray-500" id="modal-area-dist">-- km</p>
+          </div>
+          <button
+            onclick="document.getElementById('slots-modal').classList.add('hidden')"
+            class="bg-gray-200 hover:bg-gray-300 rounded-full p-1 text-gray-600"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div
+          id="modal-slots-grid"
+          class="p-4 overflow-y-auto grid grid-cols-4 gap-2 bg-gray-50 flex-1"
+        >
+          <!-- Slots -->
+        </div>
+      </div>
+    </div>
+
+
+    <script>
+      const API_BASE = "http://localhost:8080/api";
+      const token = localStorage.getItem("parkease_token");
+      if (!token) window.location.href = "auth.html";
+
+      let map, markersGroup;
+
+      // Store all data here for searching
+      let allParkingData = [];
+
+      const blueIcon = new L.Icon({
+        iconUrl:
+          "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41],
+      });
+      const redIcon = new L.Icon({
+        iconUrl:
+          "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41],
+      });
+
+      async function init() {
+        try {
+          const user = await fetchAPI("/user/profile");
+          if (user.role !== "DRIVER") {
+            alert("Only DRIVER Route");
+            window.location.href = "dashboard.html";
+            return;
+          }
+          if (user.latitude && user.longitude) {
+            initMap(user.latitude, user.longitude);
+          } else {
+            initMap(22.7196, 75.8577);
+          }
+          findAllParking();
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      async function fetchAPI(endpoint) {
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+          headers: {
+            "Content-Type": "application/json",
+            "X-Auth-Token": token,
+          },
+        });
+        return res.json();
+      }
+
+      function initMap(lat, lon) {
+        map = L.map("map").setView([lat, lon], 13);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "OSM",
+        }).addTo(map);
+        markersGroup = L.layerGroup().addTo(map);
+        L.marker([lat, lon], { icon: blueIcon })
+          .addTo(map)
+          .bindPopup("You")
+          .openPopup();
+      }
+
+      async function findAllParking() {
+        const loader = document.getElementById("parking-loading");
+        loader.classList.remove("hidden");
+
+        try {
+          // 1. Fetch Data
+          const areas = await fetchAPI("/slots/all");
+          loader.classList.add("hidden");
+
+          if (!Array.isArray(areas)) return;
+
+          // 2. Store in global variable
+          allParkingData = areas;
+
+          // 3. Render everything initially
+          renderAreas(allParkingData);
+        } catch (e) {
+          console.error(e);
+          loader.innerText = "Error loading data";
+        }
+      }
+
+      // --- SEARCH FILTER FUNCTION ---
+      function filterParking() {
+        const query = document
+          .getElementById("search-input")
+          .value.toLowerCase();
+
+        // Split query into tokens (e.g. "MR 10" -> ["mr", "10"])
+        const tokens = query.split(" ").filter((t) => t.trim() !== "");
+
+        if (tokens.length === 0) {
+          renderAreas(allParkingData); // Show all if empty
+          return;
+        }
+
+        const filtered = allParkingData.filter((area) => {
+          const searchString = (area.name + " " + area.address).toLowerCase();
+          // Check if ALL tokens are present in the string
+          return tokens.every((token) => searchString.includes(token));
+        });
+
+        renderAreas(filtered);
+      }
+
+      // --- REUSABLE RENDER FUNCTION ---
+      function renderAreas(areasToRender) {
+        const container = document.getElementById("parking-results");
+        container.innerHTML = "";
+        container.classList.remove("hidden");
+
+        // Clear existing markers
+        if (markersGroup) markersGroup.clearLayers();
+
+        if (areasToRender.length === 0) {
+          container.innerHTML =
+            '<p class="text-center text-gray-400 text-sm">No matching parking found.</p>';
+          return;
+        }
+
+        areasToRender.forEach((area) => {
+          // 1. Add Marker
+          if (map && area.latitude && area.longitude) {
+            const marker = L.marker([area.latitude, area.longitude], {
+              icon: redIcon,
+            }).bindPopup(
+              `<b>${area.name}</b><br><button onclick="viewAreaSlots(${
+                area.areaId
+              }, '${area.name.replace(/'/g, "\\'")}', '${
+                area.distanceKm
+              }')" class="text-indigo-600 font-bold text-xs mt-1 underline">View Slots</button>`
+            );
+            markersGroup.addLayer(marker);
+          }
+
+          // 2. Add Card
+          container.innerHTML += `
+                <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                    <div class="flex justify-between mb-1">
+                        <h3 class="font-black text-gray-800 text-base truncate w-3/4">${
+                          area.name
+                        }</h3>
+                        <span class="text-xs bg-indigo-900 text-white px-2 py-0.5 rounded-full font-bold">${
+                          area.distanceKm
+                        }km</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3 truncate">${
+                      area.address || "No Address"
+                    }</p>
+                    <div class="flex gap-2 mb-3 text-center">
+                        <div class="flex-1 bg-gray-50 rounded p-1"><div class="text-[10px] text-gray-400">S</div><div class="text-xs font-bold text-gray-700">${
+                          area.availableSmall
+                        }</div></div>
+                        <div class="flex-1 bg-gray-50 rounded p-1"><div class="text-[10px] text-gray-400">M</div><div class="text-xs font-bold text-gray-700">${
+                          area.availableMedium
+                        }</div></div>
+                        <div class="flex-1 bg-gray-50 rounded p-1"><div class="text-[10px] text-gray-400">L</div><div class="text-xs font-bold text-gray-700">${
+                          area.availableLarge
+                        }</div></div>
+                    </div>
+                    <button onclick="viewAreaSlots(${
+                      area.areaId
+                    }, '${area.name.replace(/'/g, "\\'")}', '${
+            area.distanceKm
+          }')" class="w-full bg-gray-900 text-white text-xs font-bold py-2 rounded-lg hover:bg-black transition">View Slots</button>
+                </div>`;
+        });
+      }
+
+      // ... keep viewAreaSlots() and init() as they were ...
+      window.viewAreaSlots = async (id, name, dist) => {
+        const modal = document.getElementById("slots-modal");
+        const grid = document.getElementById("modal-slots-grid");
+        document.getElementById("modal-area-name").innerText = name;
+        document.getElementById("modal-area-dist").innerText = `${dist} km`;
+        grid.innerHTML =
+          '<div class="col-span-full text-center py-4 text-gray-400 text-xs">Loading...</div>';
+        modal.classList.remove("hidden");
+        try {
+          const slots = await fetchAPI(`/slots/area/${id}`);
+          if (!slots.length) {
+            grid.innerHTML =
+              '<div class="col-span-full text-center py-4 text-gray-400 text-xs">No slots available.</div>';
+            return;
+          }
+          grid.innerHTML = "";
+          slots.forEach((s) => {
+            let color =
+              "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed";
+            let action = "";
+            if (s.status === "AVAILABLE") {
+              color =
+                "bg-green-50 text-green-700 border-green-200 cursor-pointer hover:bg-green-100";
+              action = `onclick="location.href='booking.html?slotId=${s.slotId}&areaId=${id}'"`;
+            } else if (s.status === "OCCUPIED")
+              color =
+                "bg-red-50 text-red-300 border-red-100 cursor-not-allowed";
+            else if (s.status === "RESERVED")
+              color =
+                "bg-yellow-50 text-yellow-600 border-yellow-100 cursor-not-allowed";
+            grid.innerHTML += `<div ${action} class="border rounded p-1 text-center ${color}"><div class="text-[13px] font-bold">${s.slotNumber}</div><div class="text-[10px] ">${s.status}</div></div>`;
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      };
+
+      init();
+    </script>
+  </body>
+</html>
