@@ -65,8 +65,7 @@ build/
 # Environment / Config
 ##################################
 *.env
-application.properties
-src/main/resources/application.properties
+
 
 ##################################
 # Generated / Local files
@@ -95,3 +94,5 @@ backend/**/test-frontend/
 # Git
 ##################################
 .gitattributes
+
+a1.txt
