@@ -81,18 +81,27 @@ jwt.secret=CHANGE_THIS_SECRET_FOR_PRODUCTION
 
 ### Backend
 
-Run:
 
-```
-ParkEaseApplication.java
-```
 
-**Recommended**
+
 
 ```bash
 git clone https://github.com/chetankhairnar05/Park_Ease_Batch_10.git
-cd Park_Ease_Batch_10
+cd .\backend\backend\
+#change in application.properties first 
 .\mvnw.cmd spring-boot:run
+```
+
+### Frontend
+
+
+
+
+
+```bash
+cd .\frontend\
+npm i
+npm run dev
 ```
 
 On first startup, **AdminSeeder** automatically populates the database with users, areas, slots, guards, vehicles, and pricing data.
