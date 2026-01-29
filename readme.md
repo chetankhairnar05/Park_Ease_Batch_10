@@ -115,18 +115,10 @@ Open:
 **Method 1**
 
 ```
-http://localhost:8080/auth.html
+http://localhost:5173/
 ```
 
-**Method 2 (Recommended for JS support)**
 
-Use **Live Server** in VS Code:
-
-```
-frontend1/auth.html
-```
-
----
 
 # 🌱 Default Seeded Users (Auto-Created)
 
@@ -337,7 +329,7 @@ DTO-based messaging prevents serialization recursion.
 | Database  | MySQL 8                 |
 | Security  | Spring Security 6 + JWT |
 | Analytics | Chart.js                |
-| Frontend  | HTML, Tailwind CSS, JS  |
+| Frontend  | React,Tailwind CSS,Vite |
 
 ---
 
