@@ -9,6 +9,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * JPA repository for User accounts with login and role-based queries.
+ */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 

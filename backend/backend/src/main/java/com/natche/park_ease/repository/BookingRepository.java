@@ -12,6 +12,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * JPA repository for Booking entities with queries for active bookings, history, and analytics.
+ */
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 

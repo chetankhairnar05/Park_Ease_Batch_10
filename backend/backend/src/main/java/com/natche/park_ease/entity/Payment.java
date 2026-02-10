@@ -9,6 +9,10 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
+/**
+ * Database entity representing a payment transaction, either for a booking or a wallet top-up.
+ * Tied to a user and optionally a booking, with method, status, amount, and timestamp.
+ */
 @Entity
 @Table(name = "payments")
 @Data

@@ -7,6 +7,11 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
+/**
+ * Database entity representing a managed parking area/location.
+ * Stores capacity, location metadata, dynamic pricing configuration, and links
+ * to slots, guards, and the owning user account.
+ */
 @Entity
 @Table(name = "parking_areas")
 @Data

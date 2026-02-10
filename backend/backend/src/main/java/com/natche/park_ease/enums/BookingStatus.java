@@ -1,6 +1,8 @@
 package com.natche.park_ease.enums;
 
-
+/**
+ * Lifecycle states for a booking from reservation through completion or default.
+ */
 public enum BookingStatus {
     RESERVED,           // Booked, timer running, user not arrived
     ACTIVE_PARKING,     // QR scanned, currently parking

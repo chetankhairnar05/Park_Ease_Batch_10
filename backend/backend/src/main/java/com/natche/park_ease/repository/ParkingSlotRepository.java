@@ -11,6 +11,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * JPA repository for ParkingSlot inventory, availability, and occupancy queries.
+ */
 @Repository
 public interface ParkingSlotRepository extends JpaRepository<ParkingSlot, Long> {
 

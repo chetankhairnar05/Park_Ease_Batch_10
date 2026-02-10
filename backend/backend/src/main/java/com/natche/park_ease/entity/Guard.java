@@ -3,6 +3,9 @@ package com.natche.park_ease.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Database entity linking a guard user account to the parking area they manage.
+ */
 @Entity
 @Table(name = "guards")
 @Data

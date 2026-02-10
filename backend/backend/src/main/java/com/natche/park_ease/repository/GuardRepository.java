@@ -6,6 +6,9 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 import java.util.List;
 
+/**
+ * JPA repository for Guard assignments by user or area.
+ */
 @Repository
 public interface GuardRepository extends JpaRepository<Guard, Long> {
     

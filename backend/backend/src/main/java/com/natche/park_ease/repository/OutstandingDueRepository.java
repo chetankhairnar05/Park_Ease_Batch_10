@@ -8,6 +8,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * JPA repository for OutstandingDue records with aggregation helpers for debt totals.
+ */
 @Repository
 public interface OutstandingDueRepository extends JpaRepository<OutstandingDue, Long> {
 

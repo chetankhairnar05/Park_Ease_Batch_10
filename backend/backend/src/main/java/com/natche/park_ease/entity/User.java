@@ -12,6 +12,10 @@ import java.util.List;
 
 import java.time.LocalDateTime;
 
+/**
+ * Database entity for application users (drivers, admins, guards, area owners).
+ * Stores identity, contact, role, wallet balance, status flags, and vehicle access links.
+ */
 @Entity
 @Table(name = "users")
 @Data // Lombok: Getters, Setters, toString, etc.

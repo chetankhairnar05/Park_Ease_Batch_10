@@ -5,6 +5,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * JPA repository for Payment records, including booking-linked lookups.
+ */
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     

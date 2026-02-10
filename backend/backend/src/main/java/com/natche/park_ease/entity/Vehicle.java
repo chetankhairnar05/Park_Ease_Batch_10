@@ -5,6 +5,10 @@ import com.natche.park_ease.enums.VehicleType;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Database entity representing a registered vehicle in the system.
+ * Includes identifying details and a link to the user who created it.
+ */
 @Entity
 @Table(name = "vehicles")
 @Data

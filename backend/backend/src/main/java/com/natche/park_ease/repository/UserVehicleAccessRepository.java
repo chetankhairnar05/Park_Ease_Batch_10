@@ -7,6 +7,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * JPA repository for UserVehicleAccess mappings between users and vehicles.
+ */
 @Repository
 public interface UserVehicleAccessRepository extends JpaRepository<UserVehicleAccess, Long> {
 

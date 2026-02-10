@@ -6,6 +6,10 @@ import com.natche.park_ease.enums.UserVehicleAccessRole;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Join entity mapping users to vehicles they can access.
+ * Captures access role (owner/guest), enablement, and primary-vehicle flag.
+ */
 @Entity
 @Table(name = "user_vehicle_access")
 @Data

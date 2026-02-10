@@ -8,6 +8,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * JPA repository for ParkingArea data, including owner filters and nearest-area lookup.
+ */
 @Repository
 public interface ParkingAreaRepository extends JpaRepository<ParkingArea, Long> {
 

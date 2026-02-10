@@ -7,6 +7,11 @@ import com.natche.park_ease.enums.VehicleType;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Database entity representing an individual parking slot within a parking area.
+ * Captures supported vehicle type, current availability status, and base pricing,
+ * with optimistic locking to prevent double booking.
+ */
 @Entity
 @Table(name = "parking_slots")
 @Data

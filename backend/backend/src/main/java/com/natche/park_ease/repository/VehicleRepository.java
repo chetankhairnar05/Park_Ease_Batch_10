@@ -7,6 +7,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * JPA repository for Vehicle records with lookup by registration and creator.
+ */
 @Repository
 public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
 

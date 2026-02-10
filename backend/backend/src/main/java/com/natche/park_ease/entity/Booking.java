@@ -7,6 +7,11 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Database entity representing a parking booking/reservation for a user and vehicle.
+ * Links to the selected area/slot, tracks lifecycle timestamps and status, and stores
+ * payment records plus rate/fee snapshots used to bill the booking.
+ */
 @Entity
 @Table(name = "bookings")
 @Data
