@@ -1,34 +1,66 @@
+// ============================================================================
+// BOOKING COMPONENT
+// ============================================================================
+// Handles slot booking flow: slot selection, vehicle assignment, reservation/parking
+// Features: Real-time updates via WebSocket, live timer, two booking modes
+// ============================================================================
+
 import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Client } from "@stomp/stompjs";
+import { Client } from "@stomp/stompjs"; // WebSocket client
 
+// API configuration
 const API_BASE = "http://localhost:8080/api";
-const SOCKET_URL = "ws://localhost:8080/ws"; // Note: Use 'ws://' for native STOMP or 'http://' if using SockJS adapter, but Client prefers ws
+const SOCKET_URL = "ws://localhost:8080/ws";
 
 export default function Booking() {
+  // ---------------------------------------------------------------------------
+  // HOOKS & URL PARAMETERS
+  // ---------------------------------------------------------------------------
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  // Extract slot and area IDs from URL query params
   const slotId = searchParams.get("slotId");
   const urlAreaId = searchParams.get("areaId");
 
+  // ---------------------------------------------------------------------------
+  // STATE MANAGEMENT
+  // ---------------------------------------------------------------------------
+
+  // Loading & error states
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Slot details fetched from backend
   const [slotInfo, setSlotInfo] = useState(null);
+
+  // User's registered vehicles
   const [vehicles, setVehicles] = useState([]);
+
+  // Selected vehicle ID for this booking
   const [selectedVehicle, setSelectedVehicle] = useState("");
 
-  // Stage Control
-  const [stage, setStage] = useState("CONFIRM"); // CONFIRM or LIVE
+  // Stage control: "CONFIRM" (booking form) or "LIVE" (active session)
+  const [stage, setStage] = useState("CONFIRM");
 
-  // Live State
+  // Live booking state (populated after booking creation)
   const [liveBooking, setLiveBooking] = useState(null);
+
+  // Timer display string (MM:SS format)
   const [timerStr, setTimerStr] = useState("00:00");
+
+  // Refs for WebSocket and timer cleanup
   const stompClientRef = useRef(null);
   const timerIntervalRef = useRef(null);
 
+  // Auth token from localStorage
   const token = localStorage.getItem("parkease_token");
 
-  // Helper API Fetch
+  // ---------------------------------------------------------------------------
+  // HELPER: API Fetch
+  // ---------------------------------------------------------------------------
+  // Generic function for authenticated API calls
   const fetchAPI = async (endpoint, method = "GET", body = null) => {
     const headers = {
       "Content-Type": "application/json",
@@ -40,6 +72,7 @@ export default function Booking() {
     const res = await fetch(`${API_BASE}${endpoint}`, opts);
     const text = await res.text();
 
+    // Handle errors
     if (!res.ok) {
       try {
         const errJson = JSON.parse(text);
@@ -48,6 +81,8 @@ export default function Booking() {
         throw new Error(text || `API Error: ${res.status}`);
       }
     }
+
+    // Parse response
     try {
       return JSON.parse(text);
     } catch {
@@ -55,34 +90,51 @@ export default function Booking() {
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // EFFECT: Component Initialization
+  // ---------------------------------------------------------------------------
+  // Loads slot details and user vehicles on mount
   useEffect(() => {
+    // Authentication check
     if (!token) {
       navigate("/auth");
       return;
     }
+
+    // Validate slot ID
     if (!slotId) {
       setError("Invalid Booking Link. Slot ID missing.");
       setLoading(false);
       return;
     }
 
+    // Initialize data
     const init = async () => {
       try {
+        // API CALL 1: Get slot details
+        // GET /api/slots/{slotId}/details
         const sInfo = await fetchAPI(`/slots/${slotId}/details`);
         setSlotInfo(sInfo);
 
+        // API CALL 2: Get user's vehicles
+        // GET /api/user/vehicles
         const vList = await fetchAPI("/user/vehicles");
         setVehicles(vList);
 
-        // Auto-select primary compatible vehicle
+        // Auto-select compatible vehicle
+        // Filter vehicles by type compatibility with slot
         const compatible = vList.filter((v) => {
           const vType = v.vehicle.vehicleType;
+          // SMALL slot: only SMALL vehicles
           if (sInfo.type === "SMALL") return vType === "SMALL";
+          // MEDIUM slot: SMALL or MEDIUM vehicles
           if (sInfo.type === "MEDIUM")
             return vType === "SMALL" || vType === "MEDIUM";
+          // LARGE slot: any vehicle
           return true;
         });
 
+        // Select primary vehicle if available, else first compatible
         if (compatible.length > 0) {
           const primary = compatible.find((v) => v.isPrimary);
           setSelectedVehicle(
@@ -101,19 +153,26 @@ export default function Booking() {
 
     init();
 
+    // Cleanup on unmount
     return () => {
       stopTimer();
       if (stompClientRef.current) stompClientRef.current.deactivate();
     };
   }, [slotId, token, navigate]);
 
+  // ---------------------------------------------------------------------------
+  // ACTION: Create Booking
+  // ---------------------------------------------------------------------------
+  // Creates booking with selected vehicle and initial status
+  // Status options: "RESERVED" (reserve for later) or "ACTIVE_PARKING" (park now)
   const handleCreateBooking = async (status) => {
+    // Validation
     if (!selectedVehicle) {
       alert("Please select a vehicle");
       return;
     }
 
-    // Use areaId from API response if available, else from URL
+    // Get area ID (prefer API response, fallback to URL param)
     const finalAreaId = slotInfo.areaId || urlAreaId;
     if (!finalAreaId) {
       alert("Area ID missing");
@@ -122,6 +181,9 @@ export default function Booking() {
 
     setLoading(true);
     try {
+      // API CALL: Create booking
+      // POST /api/bookings/create
+      // Body: { vehicleId, slotId, areaId, initialStatus }
       const res = await fetchAPI("/bookings/create", "POST", {
         vehicleId: selectedVehicle,
         slotId,
@@ -129,13 +191,13 @@ export default function Booking() {
         initialStatus: status,
       });
 
+      // Success: Update UI and connect WebSocket
       setLiveBooking(res);
       setStage("LIVE");
       connectWS();
       updateLiveUI(res);
 
-      // In original HTML, it redirects. Here we can stay or redirect.
-      // HTML said: window.location.href = "active-bookings.html";
+      // Redirect to active bookings page
       navigate("/active-bookings");
     } catch (e) {
       alert("Booking Failed: " + e.message);
@@ -144,20 +206,26 @@ export default function Booking() {
     }
   };
 
-  // --- WEBSOCKETS ---
+  // ---------------------------------------------------------------------------
+  // WEBSOCKET: Connect for Real-Time Updates
+  // ---------------------------------------------------------------------------
+  // Establishes WebSocket connection to receive booking updates
   const connectWS = () => {
-    // Note: Since you are using @stomp/stompjs in package.json, we use Client
     const client = new Client({
       brokerURL: SOCKET_URL,
       connectHeaders: { "X-Auth-Token": token },
       debug: (str) => console.log(str),
       onConnect: () => {
+        // Subscribe to booking updates (status changes)
         client.subscribe("/user/queue/booking-updates", (msg) => {
           const b = JSON.parse(msg.body);
           updateLiveUI(b);
         });
+
+        // Subscribe to notifications (alerts, cancellations)
         client.subscribe("/user/queue/notifications", (msg) => {
           alert("🔔 " + msg.body);
+          // Redirect if booking cancelled
           if (msg.body.includes("Cancelled")) navigate("/dashboard");
         });
       },
@@ -166,20 +234,31 @@ export default function Booking() {
     stompClientRef.current = client;
   };
 
+  // ---------------------------------------------------------------------------
+  // HELPER: Update Live UI
+  // ---------------------------------------------------------------------------
+  // Updates booking state and timer based on booking status
   const updateLiveUI = (booking) => {
     setLiveBooking(booking);
+
+    // Stop timer if booking is completed or cancelled
     if (
       booking.status === "COMPLETED" ||
       booking.status === "CANCELLED_NO_SHOW"
     ) {
       stopTimer();
     } else {
+      // Start timer for active bookings
       startTimer();
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // TIMER: Start Counting
+  // ---------------------------------------------------------------------------
+  // Starts a second-by-second counter display
   const startTimer = () => {
-    stopTimer();
+    stopTimer(); // Clear any existing timer
     let sec = 0;
     timerIntervalRef.current = setInterval(() => {
       sec++;
@@ -191,10 +270,17 @@ export default function Booking() {
     }, 1000);
   };
 
+  // ---------------------------------------------------------------------------
+  // TIMER: Stop Counting
+  // ---------------------------------------------------------------------------
+  // Clears timer interval
   const stopTimer = () => {
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
   };
 
+  // ---------------------------------------------------------------------------
+  // RENDER: Loading State
+  // ---------------------------------------------------------------------------
   if (loading)
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
@@ -203,9 +289,15 @@ export default function Booking() {
       </div>
     );
 
+  // ---------------------------------------------------------------------------
+  // RENDER: Main UI
+  // ---------------------------------------------------------------------------
   return (
     <div className="bg-gray-900 min-h-screen flex flex-col items-center p-4 font-sans">
-      {/* Header */}
+
+      {/* ===================================================================
+          HEADER - Logo and back button
+      =================================================================== */}
       <div className="w-full max-w-lg bg-white rounded-xl shadow-sm p-4 mb-4 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <span className="bg-indigo-100 text-indigo-700 p-1.5 rounded text-xs font-bold">
@@ -221,25 +313,42 @@ export default function Booking() {
         </Link>
       </div>
 
+      {/* ===================================================================
+          ERROR MESSAGE (if any)
+      =================================================================== */}
       {error && (
         <div className="w-full max-w-lg bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm text-center">
           {error}
         </div>
       )}
 
-      {/* STAGE 1: CONFIRMATION */}
+      {/* ===================================================================
+          STAGE 1: BOOKING CONFIRMATION
+          Shows slot details and vehicle selection
+      =================================================================== */}
       {stage === "CONFIRM" && slotInfo && (
         <div className="w-full max-w-lg bg-white rounded-xl shadow-lg p-6">
+
+          {/* ---------------------------------------------------------
+              SLOT INFORMATION HEADER
+          --------------------------------------------------------- */}
           <div className="border-b border-gray-100 pb-4 mb-4">
+            {/* Area name */}
             <h2 className="text-lg font-black text-gray-900 leading-tight">
               {slotInfo.areaName || "Unknown Area"}
             </h2>
+            {/* Address */}
             <p className="text-sm text-gray-900 mt-1">
               {slotInfo.address || "Unknown Address"}
             </p>
           </div>
 
+          {/* ---------------------------------------------------------
+              SLOT DETAILS GRID
+              Shows slot number, type, and floor
+          --------------------------------------------------------- */}
           <div className="grid grid-cols-2 gap-4 mb-6">
+            {/* Slot Number */}
             <div className="bg-gray-50 p-3 rounded-lg text-center border border-gray-100">
               <span className="block text-[10px] text-gray-400 uppercase tracking-wider font-bold">
                 Slot No
@@ -248,6 +357,8 @@ export default function Booking() {
                 {slotInfo.slotNumber}
               </span>
             </div>
+
+            {/* Slot Type */}
             <div className="bg-gray-50 p-3 rounded-lg text-center border border-gray-100">
               <span className="block text-[10px] text-gray-400 uppercase tracking-wider font-bold">
                 Type
@@ -256,6 +367,8 @@ export default function Booking() {
                 {slotInfo.type}
               </span>
             </div>
+
+            {/* Floor Number */}
             <div className="bg-gray-50 p-3 rounded-lg text-center border border-gray-100">
               <span className="block text-[10px] text-gray-400 uppercase tracking-wider font-bold">
                 Floor
@@ -266,6 +379,10 @@ export default function Booking() {
             </div>
           </div>
 
+          {/* ---------------------------------------------------------
+              POLICY INFORMATION
+              Explains reservation timing rules
+          --------------------------------------------------------- */}
           <div className="bg-amber-50 p-3 rounded-lg border border-amber-100 mb-6 text-xs text-amber-950">
             <p className="font-bold mb-1">⏱️ Policy Info:</p>
             <p>
@@ -276,13 +393,20 @@ export default function Booking() {
             </p>
           </div>
 
+          {/* ---------------------------------------------------------
+              PRICING INFORMATION
+              Shows parking and reservation rates
+          --------------------------------------------------------- */}
           <div className="space-y-2 mb-6 text-sm bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+            {/* Parking rate (per hour) */}
             <div className="flex justify-between">
               <span className="text-indigo-950 font-bold">Parking Rate</span>
               <span className="font-bold text-indigo-900">
                 ₹{slotInfo.baseRate}/hr
               </span>
             </div>
+
+            {/* Reservation rate (charged while waiting to arrive) */}
             <div className="flex justify-between border-t border-indigo-200 pt-2 mt-2">
               <span className="text-indigo-950 font-bold">
                 Reservation Rate
@@ -293,6 +417,10 @@ export default function Booking() {
             </div>
           </div>
 
+          {/* ---------------------------------------------------------
+              VEHICLE SELECTION DROPDOWN
+              Filtered to show only compatible vehicles
+          --------------------------------------------------------- */}
           <div className="mb-12">
             <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
               Select Vehicle
@@ -304,7 +432,6 @@ export default function Booking() {
             >
               <option value="">-- Select Vehicle --</option>
               {vehicles.map((item) => (
-                // Filtering Logic inside map isn't ideal but works for small lists. Better to filter before mapping.
                 <option
                   key={item.vehicle.vehicleId}
                   value={item.vehicle.vehicleId}
@@ -315,13 +442,20 @@ export default function Booking() {
             </select>
           </div>
 
+          {/* ---------------------------------------------------------
+              ACTION BUTTONS
+              Two booking modes: Reserve or Park Now
+          --------------------------------------------------------- */}
           <div className="flex gap-3">
+            {/* Reserve Slot: Creates RESERVED booking (arrive later) */}
             <button
               onClick={() => handleCreateBooking("RESERVED")}
               className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3.5 rounded-xl shadow-sm text-sm transition transform active:scale-95"
             >
               Reserve Slot
             </button>
+
+            {/* Park Now: Creates ACTIVE_PARKING booking (immediate) */}
             <button
               onClick={() => handleCreateBooking("ACTIVE_PARKING")}
               className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-sm text-sm transition transform active:scale-95"

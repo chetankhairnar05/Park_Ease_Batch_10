@@ -1,17 +1,32 @@
+// ============================================================================
+// AUTHENTICATION COMPONENT
+// ============================================================================
+// Handles user login and registration with tab-based interface
+// Features: Login, Register, Alert notifications, Auto-redirect on success
+// ============================================================================
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+// API endpoint for authentication
 const API_BASE_URL = "http://localhost:8080/api/auth";
 
 export default function Auth() {
+  // ---------------------------------------------------------------------------
+  // HOOKS & STATE
+  // ---------------------------------------------------------------------------
   const navigate = useNavigate();
+
+  // UI state: Controls which tab is visible ("login" or "register")
   const [activeTab, setActiveTab] = useState("login");
+
+  // Alert notification state (success/error messages)
   const [alert, setAlert] = useState({ message: "", type: "", show: false });
 
-  // Login State
+  // Login form data (email/phone + password)
   const [loginData, setLoginData] = useState({ identifier: "", password: "" });
 
-  // Register State
+  // Registration form data (full user details)
   const [regData, setRegData] = useState({
     name: "",
     email: "",
@@ -19,15 +34,24 @@ export default function Auth() {
     password: "",
   });
 
+  // ---------------------------------------------------------------------------
+  // HELPER: Show Alert Notification
+  // ---------------------------------------------------------------------------
+  // Displays alert and auto-hides after 3 seconds
   const showAlert = (message, type) => {
     setAlert({ message, type, show: true });
-    // Auto hide after 3 seconds
     setTimeout(() => setAlert({ ...alert, show: false }), 3000);
   };
 
+  // ---------------------------------------------------------------------------
+  // LOGIN HANDLER
+  // ---------------------------------------------------------------------------
+  // Authenticates user and stores JWT token on success
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
+      // API CALL: POST /api/auth/login
+      // Body: { identifier: email/phone, password }
       const response = await fetch(`${API_BASE_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -37,11 +61,15 @@ export default function Auth() {
       const data = await response.json();
 
       if (response.ok) {
+        // Store JWT token and username in localStorage
         localStorage.setItem("parkease_token", data.token);
         localStorage.setItem("parkease_user", data.username);
+
+        // Show success message and redirect to dashboard
         showAlert("Login Successful! Redirecting...", "success");
         setTimeout(() => navigate("/dashboard"), 1000);
       } else {
+        // Show error from backend
         showAlert(data.message || "Invalid Credentials", "error");
       }
     } catch (error) {
@@ -50,15 +78,22 @@ export default function Auth() {
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // REGISTRATION HANDLER
+  // ---------------------------------------------------------------------------
+  // Creates new user account and prompts to login
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
+      // API CALL: POST /api/auth/register
+      // Body: { name, email, phone, password }
       const response = await fetch(`${API_BASE_URL}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(regData),
       });
 
+      // Parse response (may be plain text or JSON)
       const text = await response.text();
       let data;
       try {
@@ -68,10 +103,12 @@ export default function Auth() {
       }
 
       if (response.ok) {
+        // Success: Show message, clear form, switch to login tab
         showAlert("Registration Successful! Please Login.", "success");
         setRegData({ name: "", email: "", phone: "", password: "" });
         setTimeout(() => setActiveTab("login"), 1500);
       } else {
+        // Show error from backend
         showAlert(data.message || data.error || "Registration Failed", "error");
       }
     } catch (error) {
@@ -80,11 +117,18 @@ export default function Auth() {
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // RENDER
+  // ---------------------------------------------------------------------------
   return (
     <div className="bg-gray-900 flex items-center justify-center min-h-screen p-4 font-sans">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden fade-in">
-        {/* Header */}
+
+        {/* ===================================================================
+            HEADER - Brand logo and title
+        =================================================================== */}
         <div className="bg-indigo-600 p-8 text-center">
+          {/* Logo icon */}
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-500 mb-4 text-white">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -101,6 +145,8 @@ export default function Auth() {
               />
             </svg>
           </div>
+
+          {/* App name and tagline */}
           <h1 className="text-3xl font-bold text-white tracking-tight">
             Park Ease
           </h1>
@@ -109,12 +155,15 @@ export default function Auth() {
           </p>
         </div>
 
-        {/* Navigation Tabs */}
+        {/* ===================================================================
+            TAB NAVIGATION - Switch between Login and Register
+        =================================================================== */}
         <div className="flex border-b border-gray-100">
+          {/* Login tab */}
           <button
             onClick={() => {
               setActiveTab("login");
-              setAlert({ ...alert, show: false });
+              setAlert({ ...alert, show: false }); // Hide alerts on tab switch
             }}
             className={`flex-1 py-4 text-sm font-medium focus:outline-none transition-colors ${
               activeTab === "login"
@@ -124,10 +173,12 @@ export default function Auth() {
           >
             Login
           </button>
+
+          {/* Register tab */}
           <button
             onClick={() => {
               setActiveTab("register");
-              setAlert({ ...alert, show: false });
+              setAlert({ ...alert, show: false }); // Hide alerts on tab switch
             }}
             className={`flex-1 py-4 text-sm font-medium focus:outline-none transition-colors ${
               activeTab === "register"
@@ -139,8 +190,12 @@ export default function Auth() {
           </button>
         </div>
 
-        {/* Forms Container */}
+        {/* ===================================================================
+            FORMS CONTAINER
+        =================================================================== */}
         <div className="p-8">
+
+          {/* Alert notification (shown when alert.show is true) */}
           {alert.show && (
             <div
               className={`mb-4 p-3 rounded text-sm text-center ${alert.type === "error" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}
@@ -149,8 +204,12 @@ export default function Auth() {
             </div>
           )}
 
+          {/* ---------------------------------------------------------
+              LOGIN FORM
+          --------------------------------------------------------- */}
           {activeTab === "login" && (
             <form onSubmit={handleLogin} className="space-y-5 fade-in">
+              {/* Email/Phone input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email or Phone
@@ -166,6 +225,8 @@ export default function Auth() {
                   }
                 />
               </div>
+
+              {/* Password input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Password
@@ -181,6 +242,8 @@ export default function Auth() {
                   }
                 />
               </div>
+
+              {/* Remember me & Forgot password */}
               <div className="flex items-center justify-between text-sm">
                 <label className="flex items-center text-gray-600">
                   <input
@@ -196,6 +259,8 @@ export default function Auth() {
                   Forgot Password?
                 </a>
               </div>
+
+              {/* Submit button */}
               <button
                 type="submit"
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform active:scale-95"
@@ -205,8 +270,12 @@ export default function Auth() {
             </form>
           )}
 
+          {/* ---------------------------------------------------------
+              REGISTRATION FORM
+          --------------------------------------------------------- */}
           {activeTab === "register" && (
             <form onSubmit={handleRegister} className="space-y-4 fade-in">
+              {/* Full Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Full Name
@@ -222,6 +291,8 @@ export default function Auth() {
                   }
                 />
               </div>
+
+              {/* Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email Address
@@ -237,6 +308,8 @@ export default function Auth() {
                   }
                 />
               </div>
+
+              {/* Phone */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Phone Number
@@ -252,6 +325,8 @@ export default function Auth() {
                   }
                 />
               </div>
+
+              {/* Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Password
@@ -267,6 +342,8 @@ export default function Auth() {
                   }
                 />
               </div>
+
+              {/* Submit button */}
               <button
                 type="submit"
                 className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform active:scale-95 mt-2"
@@ -277,6 +354,10 @@ export default function Auth() {
           )}
         </div>
 
+        {/* ===================================================================
+            PARTNER REGISTRATION LINK
+            For Admin/Area Owner registration (separate flow)
+        =================================================================== */}
         <div className="w-full flex item-center justify-center text-sm py-5">
           <div>
             <span className="px-3 text-gray-700">Partner Registration?</span>
@@ -286,6 +367,9 @@ export default function Auth() {
           </div>
         </div>
 
+        {/* ===================================================================
+            FOOTER - Copyright notice
+        =================================================================== */}
         <div className="bg-gray-50 px-8 py-4 border-t border-gray-100 text-center">
           <p className="text-xs text-gray-500">
             &copy; 2025 Park Ease Inc. All rights reserved.

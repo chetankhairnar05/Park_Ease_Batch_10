@@ -1,27 +1,49 @@
+// ============================================================================
+// USER DASHBOARD COMPONENT
+// ============================================================================
+// Main landing page showing: wallet balance, active session, vehicles, history
+// Features: Role-based console links, CSV export, booking history with details
+// ============================================================================
+
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const API_BASE = "http://localhost:8080/api";
 
 export default function Dashboard() {
+  // ---------------------------------------------------------------------------
+  // STATE MANAGEMENT
+  // ---------------------------------------------------------------------------
   const navigate = useNavigate();
+
+  // User profile data
   const [user, setUser] = useState({
     name: "User",
     walletBalance: 0,
     role: "",
   });
+
+  // Current active booking (if any)
   const [activeBooking, setActiveBooking] = useState(null);
+
+  // User's registered vehicles
   const [vehicles, setVehicles] = useState([]);
+
+  // Booking history (completed/cancelled sessions)
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
+
+  // Expanded history item ID (for details view)
   const [expandedHistId, setExpandedHistId] = useState(null);
 
-  // Export Date State
+  // Date range for CSV export filtering
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
 
   const token = localStorage.getItem("parkease_token");
 
-  // Helper API Fetch
+  // ---------------------------------------------------------------------------
+  // HELPER: API Fetch
+  // ---------------------------------------------------------------------------
   const fetchAPI = async (endpoint) => {
     const res = await fetch(`${API_BASE}${endpoint}`, {
       headers: {
@@ -33,6 +55,9 @@ export default function Dashboard() {
     return res.json();
   };
 
+  // ---------------------------------------------------------------------------
+  // EFFECT: Initialize Dashboard Data
+  // ---------------------------------------------------------------------------
   useEffect(() => {
     if (!token) {
       navigate("/auth");
@@ -41,21 +66,20 @@ export default function Dashboard() {
 
     const init = async () => {
       try {
-        // 1. Profile
+        // 1. Load user profile
         const userData = await fetchAPI("/user/profile");
         setUser(userData);
 
-        // Role Redirects (as per your HTML logic)
+        // Role-based navigation (can be enabled if needed)
         if (userData.role === "AREA_OWNER") {
-          // You will need to create this route later
-          // navigate("/owner-dashboard");
           console.log("Redirect to Owner Dashboard");
+          // navigate("/owner-dashboard");
         } else if (userData.role === "ADMIN") {
-          // navigate("/admin-dashboard");
           console.log("Redirect to Admin Dashboard");
+          // navigate("/admin-dashboard");
         }
 
-        // 2. Vehicles
+        // 2. Load user vehicles
         try {
           const vehs = await fetchAPI("/user/vehicles");
           setVehicles(vehs);
@@ -63,7 +87,7 @@ export default function Dashboard() {
           console.error("Error loading vehicles", e);
         }
 
-        // 3. History
+        // 3. Load booking history
         try {
           const histData = await fetchAPI("/bookings/list/history");
           setHistory(histData);
@@ -73,7 +97,7 @@ export default function Dashboard() {
           setLoadingHistory(false);
         }
 
-        // 4. Active Session
+        // 4. Check for active booking
         try {
           const res = await fetch(`${API_BASE}/bookings/active`, {
             headers: { "X-Auth-Token": token },
@@ -87,34 +111,37 @@ export default function Dashboard() {
         }
       } catch (error) {
         console.error("Init failed", error);
-        // navigate("/auth"); // Optional: redirect on error
       }
     };
 
     init();
   }, [token, navigate]);
 
-  // Export Logic (Replaces ExportUtils.js)
+  // ---------------------------------------------------------------------------
+  // EXPORT: Generate CSV from History
+  // ---------------------------------------------------------------------------
+  // Filters by date range and exports booking data
   const handleExport = () => {
     const { start, end } = dateRange;
     if (!history.length) return;
 
-    // Filter
+    // Filter by date range
     const filtered = history.filter((item) => {
       if (!start && !end) return true;
       const itemDate = new Date(item.reservationTime || item.bookingTime);
       const startDate = start ? new Date(start) : new Date("1970-01-01");
       const endDate = end ? new Date(end) : new Date("2100-01-01");
-      // Adjust end date to include the full day
-      endDate.setHours(23, 59, 59, 999);
+      endDate.setHours(23, 59, 59, 999); // Include full end day
       return itemDate >= startDate && itemDate <= endDate;
     });
 
-    // Flatten Data
+    // Transform to flat structure for CSV
     const flatData = filtered.map((b) => {
       const time = new Date(
         b.reservationTime || b.bookingTime,
       ).toLocaleString();
+
+      // Calculate final amount based on status
       let finalAmount = 0;
       if (b.status === "COMPLETED")
         finalAmount = (b.finalReservationFee || 0) + (b.finalParkingFee || 0);
@@ -132,7 +159,7 @@ export default function Dashboard() {
       };
     });
 
-    // CSV Generation
+    // Generate CSV string
     const headers = [
       "Booking ID",
       "Date",
@@ -151,7 +178,7 @@ export default function Dashboard() {
       ),
     ].join("\n");
 
-    // Download
+    // Trigger download
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -162,15 +189,24 @@ export default function Dashboard() {
     document.body.removeChild(link);
   };
 
+  // ---------------------------------------------------------------------------
+  // HELPER: Toggle History Item Details
+  // ---------------------------------------------------------------------------
   const toggleDetails = (id) => {
     setExpandedHistId(expandedHistId === id ? null : id);
   };
 
+  // ---------------------------------------------------------------------------
+  // RENDER
+  // ---------------------------------------------------------------------------
   return (
     <div className="bg-gray-800 min-h-screen flex justify-center font-sans">
-      {/* Mobile Container */}
+      {/* Mobile-first container */}
       <div className="w-full max-w-md bg-white min-h-screen shadow-2xl relative flex flex-col pb-20">
-        {/* Header */}
+
+        {/* ===================================================================
+            HEADER - App branding and user greeting
+        =================================================================== */}
         <header className="bg-indigo-500 flex items-center justify-between text-white mb-1 px-9 py-2 rounded-3xl shadow-lg z-10">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
@@ -184,14 +220,22 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {/* Main Content */}
+        {/* ===================================================================
+            WALLET BALANCE DISPLAY
+        =================================================================== */}
         <div className="mx-4 px-2 py-1 rounded-full text-sm font-medium bg-gray-600/40">
           <span>Your Wallet Balance is : </span>
           <span>₹{(user.walletBalance || 0).toFixed(2)}</span>
         </div>
 
+        {/* ===================================================================
+            MAIN CONTENT - Cards, vehicles, quick actions
+        =================================================================== */}
         <div className="p-5 space-y-6 overflow-y-auto flex-1">
-          {/* Quick Action: Active Booking */}
+
+          {/* ---------------------------------------------------------
+              ACTIVE BOOKING CARD (shown if user has ongoing session)
+          --------------------------------------------------------- */}
           {activeBooking && (
             <div className="bg-indigo-200 border border-indigo-100 p-4 rounded-xl shadow-sm relative overflow-hidden">
               <div className="absolute top-0 right-0 p-3 opacity-70 text-6xl">
@@ -212,7 +256,10 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Role Consoles (Hidden for Drivers) */}
+          {/* ---------------------------------------------------------
+              ROLE-BASED CONSOLES
+              Shows management dashboard links for staff roles
+          --------------------------------------------------------- */}
           {(user.role === "ADMIN" ||
             user.role === "AREA_OWNER" ||
             user.role === "GUARD") && (
@@ -221,6 +268,7 @@ export default function Dashboard() {
                 Management for {user.role}
               </h3>
               <div className="grid grid-cols-2 gap-3">
+                {/* Area Owner Console */}
                 {(user.role === "AREA_OWNER" || user.role === "ADMIN") && (
                   <Link
                     to="/owner-dashboard"
@@ -229,6 +277,8 @@ export default function Dashboard() {
                     <span>🏢</span> Area-Owner Console
                   </Link>
                 )}
+
+                {/* Admin Dashboard */}
                 {user.role === "ADMIN" && (
                   <Link
                     to="/admin-dashboard"
@@ -237,6 +287,8 @@ export default function Dashboard() {
                     <span>⚡</span> Admin Dashboard
                   </Link>
                 )}
+
+                {/* Guard Dashboard */}
                 {user.role === "GUARD" && (
                   <Link
                     to="/guard-dashboard"
@@ -249,7 +301,9 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Promo / Info */}
+          {/* ---------------------------------------------------------
+              FIND PARKING PROMO CARD
+          --------------------------------------------------------- */}
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white p-5 rounded-2xl shadow-lg">
             <h3 className="font-bold text-lg mb-1">Find Parking Near You</h3>
             <p className="text-gray-400 text-xs mb-4">
@@ -263,7 +317,9 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          {/* Vehicles */}
+          {/* ---------------------------------------------------------
+              MY VEHICLES SECTION
+          --------------------------------------------------------- */}
           <div className="mx-0 px-4 py-7 rounded-2xl bg-gray-400">
             <div className="flex justify-between items-center mb-3">
               <h3 className="font-bold text-gray-900 text-sm">My Vehicles</h3>
@@ -286,13 +342,16 @@ export default function Dashboard() {
                     className="bg-white p-3 rounded-lg border border-gray-100 flex justify-between items-center shadow-sm"
                   >
                     <div>
+                      {/* Vehicle model with star for primary */}
                       <div className="font-bold text-gray-800 text-sm">
                         {i.vehicle.model} {i.isPrimary ? "⭐" : ""}
                       </div>
+                      {/* Registration number */}
                       <div className="text-xs text-gray-500 font-mono">
                         {i.vehicle.registerNumber}
                       </div>
                     </div>
+                    {/* Vehicle type badge */}
                     <span className="text-[10px] bg-gray-100 px-2 py-1 rounded font-bold text-gray-600 uppercase">
                       {i.vehicle.vehicleType}
                     </span>
@@ -303,7 +362,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* History Section */}
+        {/* ===================================================================
+            HISTORY & REPORTS SECTION
+        =================================================================== */}
         <div className="h-96 p-3 m-1 overflow-auto border-2 border-gray-600 bg-gray-300 rounded-3xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <div className="mt-4 border-t border-gray-200 pt-6">
             <div className="flex justify-between items-center mb-4">
@@ -312,12 +373,13 @@ export default function Dashboard() {
               </h2>
             </div>
 
-            {/* Export Controls */}
+            {/* CSV Export Controls */}
             <div className="bg-gray-50 p-3 rounded-xl mb-4 border border-gray-200">
               <p className="text-xs text-gray-500 mb-2 font-bold">
                 Generate CSV Report
               </p>
               <div className="flex gap-2 mb-2">
+                {/* Start date */}
                 <div className="flex-1">
                   <label className="text-[10px] text-gray-400">From</label>
                   <input
@@ -329,6 +391,7 @@ export default function Dashboard() {
                     className="w-full text-xs p-1 rounded border border-gray-300"
                   />
                 </div>
+                {/* End date */}
                 <div className="flex-1">
                   <label className="text-[10px] text-gray-400">To</label>
                   <input
@@ -341,6 +404,7 @@ export default function Dashboard() {
                   />
                 </div>
               </div>
+              {/* Export button */}
               <button
                 onClick={handleExport}
                 className="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 rounded flex justify-center items-center gap-1"
@@ -362,30 +426,37 @@ export default function Dashboard() {
               </button>
             </div>
 
+            {/* Loading state */}
             {loadingHistory && (
               <div className="text-center py-4 text-xs text-gray-400">
                 Loading recent history...
               </div>
             )}
 
+            {/* History list */}
             <div className="space-y-3 pb-4">
+              {/* Empty state */}
               {!loadingHistory && history.length === 0 && (
                 <div className="text-center text-xs text-gray-400">
                   No past bookings found.
                 </div>
               )}
 
+              {/* Map through history items */}
               {history.map((b) => {
                 const isCompleted = b.status === "COMPLETED";
                 const fResFee = b.finalReservationFee || 0;
                 const fParkFee = b.finalParkingFee || 0;
                 const amtPaid = b.amountPaid || 0;
                 const amtPending = b.amountPending || 0;
+
+                // Status badge color
                 const statusColor =
                   amtPending > 0
                     ? "text-red-600 bg-red-50"
                     : "text-green-600 bg-green-50";
 
+                // Calculate display amount based on status
                 let displayAmount;
                 if (isCompleted) {
                   displayAmount = (
@@ -422,11 +493,13 @@ export default function Dashboard() {
                     key={b.id}
                     className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm"
                   >
+                    {/* Summary row (clickable) */}
                     <div
                       className="p-4 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition"
                       onClick={() => toggleDetails(b.id)}
                     >
                       <div className="flex items-center gap-3">
+                        {/* Status icon */}
                         <div
                           className={`h-8 w-8 rounded-full flex items-center justify-center text-md font-bold ${statusColor}`}
                         >
@@ -451,27 +524,32 @@ export default function Dashboard() {
                       </div>
                     </div>
 
+                    {/* Expanded details */}
                     {isExpanded && (
                       <div className="bg-gray-50 p-4 border-t border-gray-100 text-sm text-gray-950">
                         <div className="grid grid-cols-2 gap-2 mb-3">
+                          {/* Vehicle */}
                           <div>
                             <span className="block text-gray-950 text-[10px]">
                               Vehicle
                             </span>
                             {b.vehicleNumber || "--"}
                           </div>
+                          {/* Slot */}
                           <div>
                             <span className="block text-gray-950 text-[10px]">
                               Slot
                             </span>
                             {b.slotNumber || "--"}
                           </div>
+                          {/* Reservation fee */}
                           <div>
                             <span className="block text-gray-950 text-[10px]">
                               Reservation Fee
                             </span>
                             ₹{fResFee.toFixed(2)}
                           </div>
+                          {/* Parking fee */}
                           <div>
                             <span className="block text-gray-950 text-[10px]">
                               Parking Fee
@@ -479,10 +557,12 @@ export default function Dashboard() {
                             ₹{fParkFee.toFixed(2)}
                           </div>
                         </div>
+                        {/* Total */}
                         <div className="flex justify-between items-center border-t border-gray-200 pt-2">
                           <span className="font-bold">Session Total:</span>
                           {displayAmount}
                         </div>
+                        {/* Debt warning */}
                         {!isCompleted && amtPending > 0 && (
                           <div className="mt-2 text-[12px] text-amber-950 bg-amber-50 p-2 rounded border border-amber-100">
                             ⚠️ Debt added. Will be deducted in next booking.
@@ -497,8 +577,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Bottom Navigation */}
+        {/* ===================================================================
+            BOTTOM NAVIGATION BAR
+        =================================================================== */}
         <div className="fixed bottom-0 w-full max-w-md bg-white border-t border-gray-100 p-2 flex justify-around items-center text-xs font-medium text-gray-400 z-50">
+          {/* Home (active) */}
           <Link
             to="/dashboard"
             className="flex flex-col items-center p-2 text-indigo-600"
@@ -512,6 +595,8 @@ export default function Dashboard() {
             </svg>
             Home
           </Link>
+
+          {/* Find parking */}
           <Link
             to="/slots"
             className="flex flex-col items-center p-2 hover:text-indigo-600 transition"
@@ -531,6 +616,8 @@ export default function Dashboard() {
             </svg>
             Find
           </Link>
+
+          {/* Activity */}
           <Link
             to="/active-bookings"
             className="flex flex-col items-center p-2 hover:text-indigo-600 transition"
@@ -550,6 +637,8 @@ export default function Dashboard() {
             </svg>
             Activity
           </Link>
+
+          {/* Profile */}
           <Link
             to="/profile"
             className="flex flex-col items-center p-2 hover:text-indigo-600 transition"
