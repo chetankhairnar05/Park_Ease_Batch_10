@@ -26,6 +26,20 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+/**
+ * BookingScheduler is responsible for executing scheduled background tasks
+ * related to parking bookings and system maintenance.
+ *
+ * Core Responsibilities:
+ * - Monitor active bookings and detect expired sessions.
+ * - Automatically update booking and parking slot statuses.
+ * - Handle outstanding dues for overdue payments.
+ * - Ensure system consistency without manual intervention.
+ *
+ * This scheduler runs at predefined intervals using Spring's @Scheduled annotation.
+ */
+
+
 
 @Component
 @EnableScheduling

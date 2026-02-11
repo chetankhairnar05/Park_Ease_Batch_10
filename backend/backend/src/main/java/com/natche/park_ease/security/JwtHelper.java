@@ -13,6 +13,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * JwtHelper handles JWT token generation and validation.
+ *
+ * Responsibilities:
+ * - Generate JWT token after successful authentication.
+ * - Validate token signature and expiration.
+ * - Extract username and claims from token.
+ *
+ * Ensures secure and stateless user authentication
+ * within the application.
+ */
+
 @Component
 public class JwtHelper {
 

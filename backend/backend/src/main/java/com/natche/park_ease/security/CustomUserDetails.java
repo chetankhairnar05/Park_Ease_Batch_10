@@ -8,6 +8,19 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 
 import java.util.Collections;
+/**
+ * CustomUserDetails implements Spring Security's UserDetails interface.
+ *
+ * This class represents the authenticated user within the application.
+ *
+ * Responsibilities:
+ * - Store user credentials and roles.
+ * - Provide user authorities to Spring Security.
+ * - Support authentication and authorization mechanisms.
+ *
+ * It acts as a bridge between the User entity and Spring Security framework.
+ */
+
 
 public class CustomUserDetails implements UserDetails {
 
